@@ -17,4 +17,5 @@ jump_prob = JumpProblem(sir_model, prob, Direct())
 
 sol = solve(jump_prob, SSAStepper())
 
-plot(sol)
+# plot(sol)
+Graph(sir_model)
