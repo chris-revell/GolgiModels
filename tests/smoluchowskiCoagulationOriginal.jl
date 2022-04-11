@@ -108,3 +108,9 @@ plot!(ϕ, sol[2,:]/Nₒ, line = (:dot,4,:orange), label="Analytical sol--X2")
 scatter!(ϕ, jsol(t)[3,:]/uₒ, label="X3 (trimers)", markercolor=:purple)
 plot!(ϕ, sol[3,:]/Nₒ, line = (:dot,4,:purple), label="Analytical sol--X3",
       ylabel = "Normalized Concentration")
+
+solMatrix = reduce(hcat,jsol.u)
+
+for i=1:size(solMatrix)[2]
+    display(sum(solMatrix[:,i].*collect(1:N)))
+end
