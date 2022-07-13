@@ -1,4 +1,5 @@
 Manifest.toml
+*.code-workspace
 
 ################################################################################
 #                          DrWatson Project Structure                          #
