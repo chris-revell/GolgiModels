@@ -10,7 +10,7 @@ using JumpProcesses
 using CairoMakie
 using Dates
 
-@from "Reactions.jl" using Reactions
+@from "AllReactions.jl" using AllReactions
 @from "Visualise.jl" using Visualise
 
 function golgiModel(nMax,tMax)

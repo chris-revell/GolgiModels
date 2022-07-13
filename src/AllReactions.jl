@@ -1,4 +1,4 @@
-module Reactions
+module AllReactions
 
 using Catalyst
 
