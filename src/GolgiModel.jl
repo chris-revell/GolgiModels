@@ -62,6 +62,8 @@ function golgiModel(nMax,tMax)
     safesave(datadir("sims",fileName),@strdict jsol params)
     visualise(nMax,jsol,params)
 
+    return nothing
+
 end
 
 export golgiModel
