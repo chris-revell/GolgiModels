@@ -16,11 +16,11 @@ function visualise(nMax,jsol,params)
     Label(fig[1,1,Bottom()],"Cis",textsize=32)
     Label(fig[1,2,Bottom()],"Medial",textsize=32)
     Label(fig[1,3,Bottom()],"Trans",textsize=32)    
-    axCis.yticks = 1:10:nMax
+    axCis.yticks = 0:10:nMax
     axCis.ylabel = "Compartment size"
-    axMed.yticks = 1:10:nMax
+    # axMed.yticks = 0:10:nMax
     # axMed.ylabel = "Compartment size"
-    axTra.yticks = 1:10:nMax
+    # axTra.yticks = 1:10:nMax
     # axTra.ylabel = "Compartment size"
     # ax.title = "Size distribution at t=$(@sprintf("%.2f", jsol.t[end]))"
     # CairoMakie.ylims!(ax,(0.5,nMax+0.5))

@@ -88,8 +88,8 @@ push!(rx, Reaction(k[end], [X[1]], nothing, [1], nothing))
 # solving the system
 jumpsys = convert(JumpSystem, rs)
 dprob   = DiscreteProblem(jumpsys, u₀map, tspan, pars)
-jprob   = JumpProblem(jumpsys, dprob, Direct(), save_positions=(false,false))
-jsol    = solve(jprob, SSAStepper(), saveat = tspan[2]/30)
+jumpProblem   = JumpProblem(jumpsys, dprob, Direct(), save_positions=(false,false))
+jsol    = solve(jumpProblem, SSAStepper(), saveat = tspan[2]/30)
 t = jsol.t
 
 solMatrix = reduce(hcat,jsol.u)

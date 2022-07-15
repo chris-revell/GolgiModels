@@ -1,6 +1,5 @@
 using DrWatson
 @quickactivate
-using Revise
 using DynamicalSystems
 using DifferentialEquations
 using GLMakie

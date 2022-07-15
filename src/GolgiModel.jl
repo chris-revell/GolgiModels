@@ -13,7 +13,7 @@ using Dates
 @from "AllReactions.jl" using AllReactions
 @from "Visualise.jl" using Visualise
 
-function golgiModel(nMax,tMax)
+function golgiModel(nMax,tMax,volume,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
 
     # nMax = maximum compartment size
     # nReactionsTotal =  Injection +
@@ -32,7 +32,7 @@ function golgiModel(nMax,tMax)
     @parameters t
     @variables k[1:nReactionsTotal]  X[1:3*nMax](t)
     
-    reactants,products,rates,stoichiometryIn,stoichiometryOut = allReactions(nMax,X)
+    reactants,products,rates,stoichiometryIn,stoichiometryOut = allReactions(nMax,X,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
     # vector to store the Reactions
     reactions = []
     for i=1:nReactionsTotal
@@ -52,10 +52,10 @@ function golgiModel(nMax,tMax)
     @named system = ReactionSystem(reactions, t, collect(X), collect(k))
 
     # solving the system
-    jumpsys = convert(JumpSystem, system)
-    dprob   = DiscreteProblem(jumpsys, u₀map, tspan, pars)
-    jprob   = JumpProblem(jumpsys, dprob, Direct(),save_positions=(false,false))
-    jsol    = solve(jprob, SSAStepper(), saveat=tMax/100)
+    # jumpsys = convert(JumpSystem, system)
+    discreteprob   = DiscreteProblem(system, u₀map, tspan, pars)
+    jumpProblem   = JumpProblem(system, discreteprob, Direct(),save_positions=(false,false)) # Converts system to a set of MassActionJumps
+    jsol    = solve(jumpProblem, SSAStepper(), saveat=tMax/100)
 
     params = @strdict nMax tMax
     fileName = savename(Dates.format(Dates.now(),"yy-mm-dd-HH-MM-SS"),params,"jld2",connector="")    
