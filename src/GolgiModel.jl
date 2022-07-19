@@ -13,7 +13,7 @@ using Dates
 @from "AllReactions.jl" using AllReactions
 @from "Visualise.jl" using Visualise
 
-function golgiModel(nMax,tMax,volume,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
+function golgiModel(nMax,tMax,volume,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
 
     # nMax = maximum compartment size
     # nReactionsTotal =  Injection +
@@ -32,7 +32,7 @@ function golgiModel(nMax,tMax,volume,cisAgg,cisSplit,cisToMed,medToCis,medAgg,me
     @parameters t
     @variables k[1:nReactionsTotal]  X[1:3*nMax](t)
     
-    reactants,products,rates,stoichiometryIn,stoichiometryOut = allReactions(nMax,X,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
+    reactants,products,rates,stoichiometryIn,stoichiometryOut = allReactions(nMax,X,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
     # vector to store the Reactions
     reactions = []
     for i=1:nReactionsTotal
