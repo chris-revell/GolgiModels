@@ -1,0 +1,15 @@
+nMax = 100
+tMax = 1000.0
+volume = 1.0
+∅ToCis = 1.0
+cisAgg = 1.0
+cisSplit = 1.0
+cisToMed = 1.0
+medToCis = 1.0
+medAgg = 1.0
+medSplit = 1.0
+medToTran = 1.0
+tranToMed = 1.0
+tranAgg = 1.0
+tranSplit = 1.0
+tranTo∅ = 1.0

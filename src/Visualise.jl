@@ -5,7 +5,7 @@ using DrWatson
 using Printf
 using Dates
 
-function visualise(nMax,jsol,params)
+function visualise(nMax,jsol,params,deterministicSol,volume)
 
     fig = Figure()
     axCis = Axis(fig[1,1],aspect=0.5)
@@ -29,13 +29,19 @@ function visualise(nMax,jsol,params)
     # display(fig)
 
     uObservableCis = Observable(jsol.u[1][1:nMax])
+    detUObservableCis = Observable(deterministicSol.u[1][1:nMax].*volume)
     uObservableMed = Observable(jsol.u[1][1+nMax:2*nMax])
+    detUObservableMed = Observable(deterministicSol.u[1][1+nMax:2*nMax].*volume)
     uObservableTra = Observable(jsol.u[1][1+2*nMax:3*nMax])
+    detUObservableTra = Observable(deterministicSol.u[1][1+2*nMax:3*nMax].*volume)
     barplot!(axCis, collect(1:nMax), uObservableCis, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:red)
+    lines!(axCis, detUObservableCis, collect(1:nMax), color=:red)
     # barplot!(axCis, collect(1:nMax), -uObservableCis, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:red)
     barplot!(axMed, collect(1:nMax), uObservableMed, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:green)
+    lines!(axMed, detUObservableMed, collect(1:nMax), color=:green)
     # barplot!(axMed, collect(1:nMax), -uObservableMed, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:green)
     barplot!(axTra, collect(1:nMax), uObservableTra, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:blue)
+    lines!(axTra, detUObservableTra, collect(1:nMax), color=:blue)
     # barplot!(axTra, collect(1:nMax), -uObservableTra, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:blue)
 
     tSteps = range(1,length(jsol.t),step=1)
@@ -49,11 +55,18 @@ function visualise(nMax,jsol,params)
         CairoMakie.xlims!(axMed,(0.0,max(10,maximum(jsol.u[i][1+nMax:2*nMax]))))
         CairoMakie.xlims!(axTra,(0.0,max(10,maximum(jsol.u[i][1+2*nMax:3*nMax]))))
         uObservableCis[] .= jsol.u[i][1:nMax]
+        detUObservableCis[] .= deterministicSol.u[i][1:nMax].*volume
         uObservableMed[] .= jsol.u[i][1+nMax:2*nMax]
+        detUObservableMed[] .= deterministicSol.u[i][1+nMax:2*nMax].*volume
         uObservableTra[] .= jsol.u[i][1+2*nMax:3*nMax]
+        detUObservableTra[] .= deterministicSol.u[i][1+2*nMax:3*nMax].*volume
+        
         uObservableCis[] = uObservableCis[]
+        detUObservableCis[] = detUObservableCis[]
         uObservableMed[] = uObservableMed[]
+        detUObservableMed[] = detUObservableMed[]
         uObservableTra[] = uObservableTra[]
+        detUObservableTra[] = detUObservableTra[]
     end
 
 end

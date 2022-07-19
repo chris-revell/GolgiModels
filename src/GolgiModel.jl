@@ -12,8 +12,14 @@ using Dates
 
 @from "AllReactions.jl" using AllReactions
 @from "Visualise.jl" using Visualise
+@from "DeterministicModel.jl" using DeterministicModel
 
 function golgiModel(nMax,tMax,volume,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
+
+    p = nMax,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅
+    u0 = zeros(3*nMax)
+    prob = ODEProblem(deterministicModel!,u0,(0.0,tMax),p)
+    deterministicSol = solve(prob,saveat=(tMax/100))
 
     # nMax = maximum compartment size
     # nReactionsTotal =  Injection +
@@ -32,7 +38,7 @@ function golgiModel(nMax,tMax,volume,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,
     @parameters t
     @variables k[1:nReactionsTotal]  X[1:3*nMax](t)
     
-    reactants,products,rates,stoichiometryIn,stoichiometryOut = allReactions(nMax,X,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
+    reactants,products,rates,stoichiometryIn,stoichiometryOut = allReactions(nMax,X,volume,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
     # vector to store the Reactions
     reactions = []
     for i=1:nReactionsTotal
@@ -60,7 +66,7 @@ function golgiModel(nMax,tMax,volume,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,
     params = @strdict nMax tMax
     fileName = savename(Dates.format(Dates.now(),"yy-mm-dd-HH-MM-SS"),params,"jld2",connector="")    
     safesave(datadir("sims",fileName),@strdict jsol params)
-    visualise(nMax,jsol,params)
+    visualise(nMax,jsol,params,deterministicSol,volume)
 
     return nothing
 
