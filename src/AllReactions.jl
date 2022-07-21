@@ -2,7 +2,9 @@ module AllReactions
 
 using Catalyst
 
-function allReactions(nMax,X,volume,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅)
+function allReactions(nReactionsTotal,k,X,volume,p)
+
+    nMax,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅ = p
 
     # Find all possible reactions pairs that result in oligomers with size <= nMax
     reactants = []
@@ -88,7 +90,13 @@ function allReactions(nMax,X,volume,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,m
     push!(stoichiometryIn,[1])
     push!(stoichiometryOut,nothing)
 
-    return reactants,products,rates,stoichiometryIn,stoichiometryOut
+    # vector to store the Reactions
+    reactions = []
+    for i=1:nReactionsTotal
+        push!(reactions, Reaction(k[i], reactants[i], products[i], stoichiometryIn[i], stoichiometryOut[i]))
+    end
+
+    return reactions, rates
 
 end
 
