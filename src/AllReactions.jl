@@ -2,100 +2,57 @@ module AllReactions
 
 using Catalyst
 
+# Find all possible reactions pairs that result in oligomers with size <= nMax    
 function allReactions(nReactionsTotal,k,X,volume,p)
 
     nMax,∅ToCis,cisAgg,cisSplit,cisToMed,medToCis,medAgg,medSplit,medToTran,tranToMed,tranAgg,tranSplit,tranTo∅ = p
 
-    # Find all possible reactions pairs that result in oligomers with size <= nMax
-    reactants = []
-    products = []
+    # Vector of reaction rates 
     rates = Float64[]
-    stoichiometryIn = []
-    stoichiometryOut = []
-
-    push!(reactants,nothing)          # Insertion into cis reactant: ∅
-    push!(products,[X[1]])            # Insertion into cis product: single vesicle in cis bucket X[1]
-    push!(rates,∅ToCis*volume)        # Insertion rate: zeroth order kinetics
-    push!(stoichiometryIn,nothing)
-    push!(stoichiometryOut,[1])
-    for i=1:nMax-1
-        push!(reactants,[X[i],X[1]])  # cis aggregation reactants 
-        push!(products,[X[i+1]])      # cis aggregation products
-        push!(rates,cisAgg)           # cis aggregation rate: second order kinetics
-        push!(stoichiometryIn,[1,1])
-        push!(stoichiometryOut,[1])
-    end
-    for i=2:nMax
-        push!(reactants,[X[i]])       # cis splitting reactants
-        push!(products,[X[i-1],X[1]]) # cis splitting products 
-        push!(rates,cisSplit)         # cis splitting rates: first order kinetics
-        push!(stoichiometryIn,[1])
-        push!(stoichiometryOut,[1,1])
-    end
-    push!(reactants,[X[1]])           # cis to medial reactant
-    push!(products,[X[nMax+1]])       # cis to medial product 
-    push!(rates,cisToMed)             # cis to medial rate: first order kinetics 
-    push!(stoichiometryIn,[1])
-    push!(stoichiometryOut,[1])
-    push!(reactants,[X[1+nMax]])      # medial to cis reactant
-    push!(products,[X[1]])            # medial to cis product 
-    push!(rates,medToCis)             # medial to cis rate: first order kinetics 
-    push!(stoichiometryIn,[1])
-    push!(stoichiometryOut,[1])
-
-    for i=nMax+1:2*nMax-1
-        push!(reactants,[X[i],X[1+nMax]])  # medial aggregation reactants 
-        push!(products,[X[i+1]])           # medial aggregation products
-        push!(rates,medAgg)                # medial aggregation rate: second order kinetics 
-        push!(stoichiometryIn,[1,1])
-        push!(stoichiometryOut,[1])
-    end
-    for i=nMax+2:2*nMax
-        push!(reactants,[X[i]])            # medial splitting reactants
-        push!(products,[X[i-1],X[1+nMax]]) # medial splitting products 
-        push!(rates,medSplit)              # medial splitting rate: first order kinetics 
-        push!(stoichiometryIn,[1])
-        push!(stoichiometryOut,[1,1])
-    end
-    push!(reactants,[X[nMax+1]])           # medial to trans reactant
-    push!(products,[X[2*nMax+1]])          # medial to trans product 
-    push!(rates,medToTran)                 # medial to trans rate: first order kinetics 
-    push!(stoichiometryIn,[1])
-    push!(stoichiometryOut,[1])
-    push!(reactants,[X[1+2*nMax]])         # trans to medial reactant
-    push!(products,[X[1+nMax]])            # trans to medial product 
-    push!(rates,tranToMed)                 # trans to medial rate: first order kinetics 
-    push!(stoichiometryIn,[1])
-    push!(stoichiometryOut,[1])
-
-    for i=2*nMax+1:3*nMax-1
-        push!(reactants,[X[i],X[1+2*nMax]]) # trans aggregation reactants 
-        push!(products,[X[i+1]])            # trans aggregation products
-        push!(rates,tranAgg)                # trans aggregation rate: second order kinetics 
-        push!(stoichiometryIn,[1,1])
-        push!(stoichiometryOut,[1]) 
-    end
-    for i=2*nMax+2:3*nMax
-        push!(reactants,[X[i]])             # trans splitting reactants
-        push!(products,[X[i-1],X[1+2*nMax]])# trans splitting products 
-        push!(rates,tranSplit)              # trans splitting rate: first order kinetics
-        push!(stoichiometryIn,[1])
-        push!(stoichiometryOut,[1,1])
-    end
-
-    # Removal 
-    push!(reactants,[X[2*nMax+1]])          # Removal from trans reactant: single vesicle in trans
-    push!(products,nothing)                 # Removal from trans product: ∅
-    push!(rates,tranTo∅)                    # Removal from trans rate: first order kinetics 
-    push!(stoichiometryIn,[1])
-    push!(stoichiometryOut,nothing)
-
     # vector to store the Reactions
     reactions = []
-    for i=1:nReactionsTotal
-        push!(reactions, Reaction(k[i], reactants[i], products[i], stoichiometryIn[i], stoichiometryOut[i]))
-    end
 
+    push!(reactions, Reaction(∅ToCis*volume, nothing, [X[1+0*nMax]], nothing, [1]))    # Insertion into cis. Reactant ∅; product X[1]; rate: zeroth order kinetics
+    push!(rates,∅ToCis*volume)
+    for i=1:nMax-1
+        push!(reactions, Reaction(cisAgg/volume, [X[i+0*nMax],X[1+0*nMax]], [X[i+1+0*nMax]], [1,1], [1])) # cis aggregation: second order kinetics
+        push!(rates,cisAgg/volume)
+    end
+    for i=2:nMax
+        push!(reactions, Reaction(cisSplit, [X[i+0*nMax]], [X[i-1+0*nMax],X[1+0*nMax]], [1], [1,1])) # cis splitting: first order kinetics
+        push!(rates,cisSplit)
+    end
+    push!(reactions, Reaction(cisToMed, [X[1+0*nMax]], [X[1+1*nMax]], [1], [1])) # cis to medial: first order kinetics 
+    push!(rates,cisToMed)
+    
+    push!(reactions, Reaction(medToCis, [X[1+1*nMax]], [X[1+0*nMax]], [1], [1])) # medial to cis: first order kinetics 
+    push!(rates,medToCis)
+    for i=1:nMax-1
+        push!(reactions, Reaction(medAgg/volume, [X[i+1*nMax],X[1+1*nMax]],[X[i+1+1*nMax]], [1,1], [1])) # med aggregation: second order kinetics
+        push!(rates,medAgg/volume)
+    end
+    for i=2:nMax
+        push!(reactions, Reaction(medSplit, [X[i+1*nMax]],[X[i-1+1*nMax],X[1+1*nMax]], [1], [1,1])) # med splitting: first order kinetics        
+        push!(rates,medSplit)
+    end
+    push!(reactions, Reaction(medToTran, [X[1+1*nMax]], [X[1+2*nMax]], [1], [1])) # med to tran: first order kinetics        
+    push!(rates,medToTran)
+
+    push!(reactions, Reaction(tranToMed, [X[1+2*nMax]], [X[1+1*nMax]], [1], [1])) # tran to med: first order kinetics        
+    push!(rates,tranToMed)
+    
+    for i=1:nMax-1
+        push!(reactions, Reaction(tranAgg/volume, [X[i+2*nMax],X[1+2*nMax]], [X[i+1+2*nMax]], [1,1], [1])) # tran aggregation: second order kinetics        
+        push!(rates,tranAgg/volume)
+    end
+    for i=2:nMax
+        push!(reactions, Reaction(tranSplit, [X[i+2*nMax]], [X[i-1+2*nMax],X[1+2*nMax]], [1], [1,1])) # tran splitting: first order kinetics        
+        push!(rates,tranSplit)
+    end
+    
+    push!(reactions, Reaction(tranTo∅, [X[1+2*nMax]], nothing, [1], nothing)) # tran to ∅: first order kinetics        
+    push!(rates,tranTo∅)
+    
     return reactions, rates
 
 end
