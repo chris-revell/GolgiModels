@@ -26,12 +26,12 @@ function stochasticModel(nMax,tMax,volume,p)
     #                nMax+1:2*nMax => medial vesicle size counts 
     #                2*nMax+1:3*nMax => trans vesicle size counts 
     @parameters t
-    @variables k[1:nReactionsTotal]  X[1:3*nMax](t)
+    @variables k[1:nReactionsTotal]  X[1:nMax*3](t)
     
     reactions, rates = allReactions(nReactionsTotal,k,X,volume,p)
 
     # initial condition of monomers
-    u₀    = zeros(Int64, 3*nMax)
+    u₀    = zeros(Int64, nMax*3)
     # pair initial condition to state vector 
     u₀map = Pair.(collect(X), u₀)
     # pair rates to parameters vector 
@@ -43,9 +43,9 @@ function stochasticModel(nMax,tMax,volume,p)
     @named system = ReactionSystem(reactions, t, collect(X), collect(k))
 
     # solving the system    
-    discreteprob = DiscreteProblem(system, u₀map, tspan, pars)
-    jumpProblem  = JumpProblem(system, discreteprob, Direct(),save_positions=(false,false)) # Converts system to a set of MassActionJumps
-    stochasticSol         = solve(jumpProblem, SSAStepper(), saveat=tMax/100)
+    discreteprob  = DiscreteProblem(system, u₀map, tspan, pars)
+    jumpProblem   = JumpProblem(system, discreteprob, Direct(),save_positions=(false,false)) # Converts system to a set of MassActionJumps
+    stochasticSol = solve(jumpProblem, SSAStepper(), saveat=tMax/100)
 
     return stochasticSol
 
