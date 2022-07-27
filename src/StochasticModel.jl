@@ -45,7 +45,7 @@ function stochasticModel(nMax,tMax,volume,p)
     # solving the system    
     discreteprob  = DiscreteProblem(system, u₀map, tspan, pars)
     jumpProblem   = JumpProblem(system, discreteprob, Direct(),save_positions=(false,false)) # Converts system to a set of MassActionJumps
-    stochasticSol = solve(jumpProblem, SSAStepper(), saveat=tMax/100)
+    stochasticSol = solve(jumpProblem, SSAStepper(), saveat=tMax/100000)
 
     return stochasticSol
 

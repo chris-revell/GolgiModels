@@ -104,7 +104,7 @@ dp = ContinuousDynamicalSystem(prob)
 # Solve diffeq with constant step for smoother curves
 diffeq = (alg = Tsit5(), adaptive = false, dt = δt)
 # Set up integrator for each iteration
-integ = integrator(dp, u0, SSAStepper(), saveat=tMax/100)
+integ = integrator(dp, u0, SSAStepper(), saveat=tMax/100000)
 
 
 # Add stop/start button to the top of the canvas
