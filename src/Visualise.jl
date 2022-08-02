@@ -6,7 +6,7 @@ using Printf
 using Dates
 using Statistics
 
-function visualise(fileName,nMax,volume,stochasticSol,stochasticTimeAverages,deterministicSol)
+function visualise(fileName,nMax,volume,stochasticSol,stochasticTimeAverages,deterministicSol,nOutput,windowLength)
 
     cisRange = 1:nMax
     medRange = 1+nMax:2*nMax
@@ -22,7 +22,8 @@ function visualise(fileName,nMax,volume,stochasticSol,stochasticTimeAverages,det
     Label(fig[1,3,Bottom()],"Trans",textsize=32)    
     axCis.yticks = 0:10:nMax
     axCis.ylabel = "Compartment size"
-    upperLim=10# upperLim = maximum([max(maximum(deterministicSol.u[i]),maximum(stochasticSol.u[i])) for i=1:101])
+    #upperLim=10
+    upperLim = maximum([max(maximum(deterministicSol.u[i]),maximum(stochasticSol.u[i])) for i=1:nOutput+1])
     xlims!(axCis,(0,upperLim))
     ylims!(axCis,(0,nMax))
     xlims!(axMed,(0,upperLim))
@@ -60,7 +61,6 @@ function visualise(fileName,nMax,volume,stochasticSol,stochasticTimeAverages,det
     lines!(axTra, stochasticTranObservableTimeAverage, collect(1:nMax), color=(:black,0.5), linestyle="--", linewidth=2)
     lines!(axTra, deterministicTranObservable, collect(1:nMax), color=(:blue,0.5), linewidth=2)
 
-    windowLength = 1000
     tSteps = range(1+windowLength,length(stochasticSol.t),step=windowLength)    
 
     record(fig,datadir("sims","$fileName.mp4"),tSteps; framerate=10) do i

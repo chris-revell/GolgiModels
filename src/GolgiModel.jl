@@ -17,79 +17,71 @@ using DifferentialEquations
 using JumpProcesses
 
 @from "Visualise.jl" using Visualise
-@from "DeterministicModel.jl" using DeterministicModel
-@from "StochasticModel.jl" using StochasticModel
 @from "AllReactions.jl" using AllReactions
 
-function golgiModel(nMax,tMax,volume,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k₈,k₉,k₁₀,k₁₁)
+# nMax= maximum compartment size
+# k₀  = ∅ToCis   
+# k₁  = cisAgg   
+# k₂  = cisSplit 
+# k₃  = cisToMed 
+# k₄  = medToCis 
+# k₅  = medAgg   
+# k₆  = medSplit 
+# k₇  = medToTran
+# k₈  = tranToMed
+# k₉  = tranAgg  
+# k₁₀ = tranSplit
+# k₁₁ = tranTo∅  
 
-    # k₀  = ∅ToCis   
-    # k₁  = cisAgg   
-    # k₂  = cisSplit 
-    # k₃  = cisToMed 
-    # k₄  = medToCis 
-    # k₅  = medAgg   
-    # k₆  = medSplit 
-    # k₇  = medToTran
-    # k₈  = tranToMed
-    # k₉  = tranAgg  
-    # k₁₀ = tranSplit
-    # k₁₁ = tranTo∅  
-    # Package parameters into p array
-    p = nMax,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k₈,k₉,k₁₀,k₁₁
+function golgiModel(nMax,tMax,volume,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k₈,k₉,k₁₀,k₁₁,nOutput)
 
-    # nMax = maximum compartment size
-    # nReactionsTotal =  Injection +
-    #                   cis aggregation + cis splitting + 
-    #                   cis to medial + medial to cis + 
-    #                   medial aggregation + medial splitting + 
-    #                   medial to trans + trans to medial +
-    #                   trans aggregation + trans splitting
-    #                   + removal 
-    nReactionsTotal = 1+2*(nMax-1)+2+2*(nMax-1)+2+2*(nMax-1)+1
-
-    # state variables are X, pars stores rate parameters for each reaction
-    # species labels 1:nMax => cis vesicle size counts 
-    #                nMax+1:2*nMax => medial vesicle size counts 
-    #                2*nMax+1:3*nMax => trans vesicle size counts 
-    @parameters t
-    @variables k[1:nReactionsTotal]  X[1:nMax*3](t)
+    # Symbolic system parameters: time and rate constants 
+    @parameters t K₀ K₁ K₂ K₃ K₄ K₅ K₆ K₇ K₈ K₉ K₁₀ K₁₁
+    # Symbolic system variables: Vector of number/concentration for cis, medial, and trans
+    @variables C(t)[1:nMax] M(t)[1:nMax] T(t)[1:nMax]
     
-    reactions, rates = allReactions(nReactionsTotal,k,X,volume,p)
-
-    # initial condition of monomers
-    u₀Stochastic    = zeros(Int64, nMax*3)
-    u₀Deterministic = zeros(Float64, nMax*3)
-    # pair initial condition to state vector 
-    u₀MapS = Pair.(collect(X), u₀Stochastic)
-    # pair rates to parameters vector 
-    pars = Pair.(collect(k), rates)
-    # time-span
-    tspan = (0.0,tMax)
-
+    reactions = allReactions(nMax,C,M,T,K₀,K₁,K₂,K₃,K₄,K₅,K₆,K₇,K₈,K₉,K₁₀,K₁₁)
+    
     # Set up reaction system object 
-    @named system = ReactionSystem(reactions, t, collect(X), collect(k))
-
-    # solving the system    
+    @named system = ReactionSystem(reactions, t, [collect(C); collect(M); collect(T)], [K₀,K₁,K₂,K₃,K₄,K₅,K₆,K₇,K₇,K₈,K₉,K₁₀,K₁₁])
+    
+    
+    # Solving stochastic model
     @info "Solving stochastic model"
-    discreteprob  = DiscreteProblem(system, u₀MapS, tspan, pars)
+    # Map symbolic rate constants to values for stochastic model 
+    p = [:K₀=>k₀, :K₁=>k₁, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
+    # p = [:K₀=>k₀/volume, :K₁=>k₁*volume, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅*volume, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉*volume, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
+    # Map symbolic state vectors to integer vectors for stochastic model 
+    u₀ = zeros(Int64,3*nMax)
+    u₀Map = Pair.([collect(C); collect(M); collect(T)],u₀)
+    discreteprob  = DiscreteProblem(system, u₀Map, (0.0,tMax), p)
     jumpProblem   = JumpProblem(system, discreteprob, Direct(),save_positions=(false,false)) # Converts system to a set of MassActionJumps
-    stochasticSol = solve(jumpProblem, SSAStepper(), saveat=tMax/100000)
+    stochasticSol = solve(jumpProblem, SSAStepper(), saveat=tMax/nOutput)
     
+
     @info "Solving deterministic model"
-    odeProblem = ODEProblem(system,u₀Deterministic,tspan,p)
-    deterministicSol = solve(odeProblem, saveat=tMax/100000)
+    # Map symbolic rate constants to values for stochastic model 
+    # p = [:K₀=>k₀, :K₁=>k₁, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
+    p2 = [:K₀=>k₀/volume, :K₁=>k₁*volume, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅*volume, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉*volume, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
+    # p2 = [:K₀=>k₀*volume, :K₁=>k₁/volume, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅/volume, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉/volume, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
+    # Map symbolic state vectors to integer vectors for stochastic model 
+    u₀ = zeros(Float64,3*nMax)
+    u₀Map = Pair.([collect(C); collect(M); collect(T)],u₀)    
+    odeProblem = ODEProblem(system,u₀Map,(0.0,tMax),p2)
+    deterministicSol = solve(odeProblem, saveat=tMax/nOutput)
     
-    windowLength = 1000
-    stochasticTimeAverages = fill(zeros(nMax*3),101)
+
+    windowLength = nOutput÷100
+    stochasticTimeAverages = fill(zeros(nMax*3),100+1)
     stochasticTimeAverages[2:end] = [mean(stochasticSol.u[i-windowLength:i]) for i=windowLength+1:windowLength:length(stochasticSol.u)]
 
-    params = @strdict nMax tMax volume k₀ k₁ k₂ k₃ k₄ k₅ k₆ k₇ k₈ k₉ k₁₀ k₁₁
-    fileName = savename(Dates.format(Dates.now(),"mm-dd-HH-MM"),params,connector="")    
+    params = @strdict nMax tMax volume k₀ k₁ k₂ k₃ k₄ k₅ k₆ k₇ k₈ k₉ k₁₀ k₁₁ nOutput
+    fileName = savename(Dates.format(Dates.now(),"mm-dd-HH-MM"),params,connector="")
+    @info "Saving data as $fileName.jld2"
     safesave(datadir("sims","$fileName.jld2"),@strdict deterministicSol stochasticSol params)
     
-    @info "Visualising results"
-    visualise(fileName,nMax,volume,stochasticSol,stochasticTimeAverages,deterministicSol)
+    @info "Visualising results; saving as $fileName.mp4"
+    visualise(fileName,nMax,volume,stochasticSol,stochasticTimeAverages,deterministicSol,nOutput,windowLength)
 
     return nothing
 

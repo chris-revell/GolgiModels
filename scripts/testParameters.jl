@@ -13,3 +13,4 @@ k₈        = 1.0 #tranToMed = 0.0
 k₉        = 0.5 #tranAgg   = 0.1
 k₁₀       = 1.0 #tranSplit = 1.0
 k₁₁       = 1.0 #tranTo∅   = 1.0
+nOutput   = 100000
