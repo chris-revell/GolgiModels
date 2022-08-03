@@ -1,3 +1,9 @@
+#
+#  Visualise.jl
+#  GolgiModels
+#
+#  Created by Christopher Revell on dd/mm/yyyy.
+
 module Visualise
 
 using CairoMakie

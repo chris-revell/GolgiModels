@@ -2,13 +2,12 @@
 #  GolgiModel.jl
 #  GolgiModels
 #
-#  Created by Christopher Revell on 31/01/2021.
+#  Created by Christopher Revell on dd/mm/yyyy.
 
 module GolgiModel
 
 using FromFile
 using DrWatson
-using CairoMakie
 using Dates
 using Statistics
 using Catalyst
@@ -51,9 +50,10 @@ function golgiModel(nMax,tMax,volume,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k�
     # Map symbolic rate constants to values for stochastic model 
     p = [:K₀=>k₀, :K₁=>k₁, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
     # p = [:K₀=>k₀/volume, :K₁=>k₁*volume, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅*volume, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉*volume, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
-    # Map symbolic state vectors to integer vectors for stochastic model 
+    # Map symbolic state vectors to integer vector for stochastic model 
     u₀ = zeros(Int64,3*nMax)
     u₀Map = Pair.([collect(C); collect(M); collect(T)],u₀)
+    # Convert to jump problem to solve 
     discreteprob  = DiscreteProblem(system, u₀Map, (0.0,tMax), p)
     jumpProblem   = JumpProblem(system, discreteprob, Direct(),save_positions=(false,false)) # Converts system to a set of MassActionJumps
     stochasticSol = solve(jumpProblem, SSAStepper(), saveat=tMax/nOutput)
@@ -61,25 +61,25 @@ function golgiModel(nMax,tMax,volume,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k�
 
     @info "Solving deterministic model"
     # Map symbolic rate constants to values for stochastic model 
-    # p = [:K₀=>k₀, :K₁=>k₁, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
     p2 = [:K₀=>k₀/volume, :K₁=>k₁*volume, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅*volume, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉*volume, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
-    # p2 = [:K₀=>k₀*volume, :K₁=>k₁/volume, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅/volume, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉/volume, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
-    # Map symbolic state vectors to integer vectors for stochastic model 
+    # Map symbolic state vectors to float vector for stochastic model 
     u₀ = zeros(Float64,3*nMax)
     u₀Map = Pair.([collect(C); collect(M); collect(T)],u₀)    
     odeProblem = ODEProblem(system,u₀Map,(0.0,tMax),p2)
     deterministicSol = solve(odeProblem, saveat=tMax/nOutput)
     
-
+    # Calculate time average for 101 time points correspoding to 101 frames in the visualisation 
     windowLength = nOutput÷100
     stochasticTimeAverages = fill(zeros(nMax*3),100+1)
     stochasticTimeAverages[2:end] = [mean(stochasticSol.u[i-windowLength:i]) for i=windowLength+1:windowLength:length(stochasticSol.u)]
 
+    # Save data to file 
     params = @strdict nMax tMax volume k₀ k₁ k₂ k₃ k₄ k₅ k₆ k₇ k₈ k₉ k₁₀ k₁₁ nOutput
     fileName = savename(Dates.format(Dates.now(),"mm-dd-HH-MM"),params,connector="")
     @info "Saving data as $fileName.jld2"
     safesave(datadir("sims","$fileName.jld2"),@strdict deterministicSol stochasticSol params)
     
+    # Visualise results 
     @info "Visualising results; saving as $fileName.mp4"
     visualise(fileName,nMax,volume,stochasticSol,stochasticTimeAverages,deterministicSol,nOutput,windowLength)
 
