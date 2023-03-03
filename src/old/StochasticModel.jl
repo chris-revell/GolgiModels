@@ -33,7 +33,7 @@ function stochasticModel(nMax,tMax,volume,p)
     # initial condition of monomers
     u₀    = zeros(Int64, nMax*3)
     # pair initial condition to state vector 
-    u₀map = Pair.(collect(X), u₀)
+    u₀MapS = Pair.(collect(X), u₀)
     # pair rates to parameters vector 
     pars = Pair.(collect(k), rates)
     # time-span
@@ -43,9 +43,9 @@ function stochasticModel(nMax,tMax,volume,p)
     @named system = ReactionSystem(reactions, t, collect(X), collect(k))
 
     # solving the system    
-    discreteprob  = DiscreteProblem(system, u₀map, tspan, pars)
+    discreteprob  = DiscreteProblem(system, u₀MapS, tspan, pars)
     jumpProblem   = JumpProblem(system, discreteprob, Direct(),save_positions=(false,false)) # Converts system to a set of MassActionJumps
-    stochasticSol = solve(jumpProblem, SSAStepper(), saveat=tMax/100000)
+    stochasticSol = solve(jumpProblem, SSAStepper(), saveat=tMax/nOutput)
 
     return stochasticSol
 

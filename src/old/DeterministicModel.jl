@@ -38,7 +38,7 @@ function solveDeterministic(nMax,tMax,p)
     # Create ODEProblem object for deterministic model
     prob = ODEProblem(deterministicModel!,u0,(0.0,tMax),p)
     # Solve deterministic model 
-    deterministicSol = solve(prob,saveat=tMax/100000)
+    deterministicSol = solve(prob,saveat=tMax/nOutput)
 
     return deterministicSol
 
