@@ -45,7 +45,7 @@ nOutput   = 100000
 
 function deterministicModel!(du,u,p,t)
 
-    @unpack nMax,ks = p
+    nMax,ks = p
 
     # Cis monomers: ∅->cis₁ + med₁->cis₁ + cis₂->2cis₁ - cis₁->med₁ - 2cis₁->cis₂, cisₙ->cis₁+cisₙ₋₁ for n>=3, cis₁+cisₙ->cisₙ₊₁ for n>=2 (n=1 in first line)
     du[1] = ks[1][] - ks[4][]*u[1] + ks[5][]*u[1+nMax] - ks[2][]*u[1]^2 - ks[2][]*u[1]*sum(u[2:nMax-1]) + 2*ks[3][]*u[2] + ks[3][]*sum(u[3:nMax])
@@ -110,9 +110,9 @@ axTra = Axis(fig[1,3],aspect=0.55,yticksvisible=false,yticklabelsvisible=false)#
 xlims!(axCis,(0.0,5.0))
 xlims!(axMed,(0.0,5.0))
 xlims!(axTra,(0.0,5.0))
-Label(fig[1,1,Bottom()],"Cis",textsize=32)
-Label(fig[1,2,Bottom()],"Medial",textsize=32)
-Label(fig[1,3,Bottom()],"Trans",textsize=32)    
+Label(fig[1,1,Bottom()],"Cis",fontsize=32)
+Label(fig[1,2,Bottom()],"Medial",fontsize=32)
+Label(fig[1,3,Bottom()],"Trans",fontsize=32)    
 axCis.yticks = 0:10:nMax
 axCis.ylabel = "Compartment size"
 
@@ -154,13 +154,15 @@ ks = [s.value for s in lsgrid.sliders]
 p = Dict{String,Any}()
 @pack! p = nMax,ks
 
-odeProblem = ODEProblem(deterministicModel!,u0,(0.0,100000.0),p)
+# odeProblem = ODEProblem(deterministicModel!,u0,(0.0,100000.0),p)
 
 # Set up differential equation integrator
-dp = ContinuousDynamicalSystem(odeProblem)
+# dp = ContinuousDynamicalSystem(odeProblem)
 
 # Set up integrator for each iteration
-integ = integrator(dp, u0; alg = Tsit5(), adaptive = false, dt = 0.1)
+prob = ODEProblem(deterministicModel!,u0,(0.0,Inf),[nMax,ks])
+integ = init(prob,Tsit5())
+# integ = init(odeProblem, u0; alg = Tsit5(), adaptive = false, dt = 0.1)
 
 # Add stop/start button to the top of the canvas
 run = Button(fig[2,1:4]; label = "Start/Stop", tellwidth = false)
@@ -179,7 +181,7 @@ on(run.clicks) do clicks
     @async while isrunning[]
         isopen(fig.scene) || break # ensures computations stop if closed window
         animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTranObservable,nMax)        
-        sleep(0.000001) # or `yield()` instead
+        # sleep(0.000001) # or `yield()` instead
     end
 end
 
