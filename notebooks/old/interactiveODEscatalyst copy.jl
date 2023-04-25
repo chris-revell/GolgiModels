@@ -31,60 +31,74 @@ using GeometryBasics
 using FileIO
 using FastBroadcast
 using OrdinaryDiffEq
+using Catalyst
 
 nMax      = 100    #nMax
 volume    = 1.0    #volume
 
-function deterministicModel!(du,u,p,t)
+# Catalyst system setup
 
-    @unpack nMax,ks = p
+# Symbolic system parameters: time and rate constants 
+@parameters t k₀ k₁ k₂ k₃ k₄ k₅ k₆ k₇ k₈ k₉ k₁₀ k₁₁
+# Symbolic system variables: Vector of number/concentration for cis, medial, and trans
+@variables C(t)[1:nMax] M(t)[1:nMax] T(t)[1:nMax]
 
-    # Cis monomers (6 reactions, 7 terms): 
-    #               ∅->c₁ - c₁->m₁     + m₁->c₁          - 2c₁->c₂        + c₂->2c₁      + cₙ->c₁+cₙ₋₁ for 3<=n<=nMax - c₁+cₙ->cₙ₊₁ for 2<=n<nMax
-    du[1]         = ks[1] - ks[4]*u[1] + ks[5]*u[1+nMax] - 2*ks[2]*u[1]^2 + 2*ks[3]*u[2] + ks[3]*sum(@view u[3:nMax]) - ks[2]*sum(@view u[2:nMax-1])
-    # Cis dimers:   2c₁->c₂      - c₂->2c₁    - c₂+c₁->c₃       + c₃->c₂+c₁
-    du[2]         = ks[2]*u[1]^2 − ks[3]*u[2] − ks[2]*u[2]*u[1] + ks[3]*u[3]
-    # Cis n-omers: 
-    #                 (c₁+cₙ₋₁->cₙ)     + (cₙ₊₁->cₙ+c₁) - (c₁+cₙ->cₙ₊₁)   - (cₙ->cₙ₋₁+c₁) for n=2:nMax-1
-    du[3:nMax-1] .= [ ks[2]*u[n-1]*u[1] + ks[3]*u[n+1]  - ks[2]*u[n]*u[1] - ks[3]*u[n]    for n=3:nMax-1 ]
-    # Cis nMax-omers: 
-    #               (c₁+cₙ₋₁->cₙ)        - (cₙ->c₁+cₙ₋₁)
-    du[nMax]      = ks[2]*u[nMax-1]*u[1] - ks[3]*u[nMax]
+# Map symbolic rate constants to values for deterministic model 
+kSymbols = [:k₀, :k₁, :k₂, :k₃, :k₄, :k₅, :k₆, :k₇, :k₈, :k₉, :k₁₀, :k₁₁]
+p = kSymbols.=>ones(Float32,12)
+# Map symbolic state vectors to float vector for stochastic model 
+u₀ = zeros(Float32,3*nMax)
+u₀Map = Pair.([collect(C); collect(M); collect(T)],u₀)    
 
-    # Med monomers (6 reactions, 8 terms): 
-    #                      c₁->m₁     - m₁->c₁          - m₁->t₁          + t₁->m₁            - 2m₁->m₂             + m₂->2m₁           + mₙ->m₁+mₙ₋₁ for 3+nMax<=n<=2nMax  - m₁+mₙ->mₙ₊₁ for 2+nMax<=n<2nMax
-    du[1+nMax]           = ks[4]*u[1] - ks[5]*u[1+nMax] - ks[8]*u[1+nMax] + ks[9]*u[1+2*nMax] - 2*ks[6]*u[1+nMax]^2 + 2*ks[7]*u[2+nMax] + ks[7]*sum(@view u[3+nMax:2*nMax]) - ks[6]*sum(@view u[2+nMax:2*nMax-1])
-    # Med dimers:          2m₁->m₂           - m₂->m₁          - m₂+m₁->m₃                 + m₃->m₂+m₁
-    du[2]                = ks[2]*u[1+nMax]^2 − ks[3]*u[2+nMax] − ks[2]*u[2+nMax]*u[1+nMax] + ks[3]*u[3+nMax]
-    # Med n-omers: 
-    #                        (m₁+mₙ₋₁->mₙ)          + (mₙ₊₁->mₙ+m₁) - (m₁+mₙ->mₙ₊₁)        - (mₙ->mₙ₋₁+m₁) for n=2+nMax:2nMax-1
-    du[3+nMax:2*nMax-1] .= [ ks[6]*u[n-1]*u[1+nMax] + ks[7]*u[n+1]  - ks[6]*u[n]*u[1+nMax] - ks[7]*u[n]    for n=3+nMax:2*nMax-1 ]
-    # Med nMax-omers: 
-    #                      (m₁+mₙ₋₁->mₙ)               - (mₙ->m₁+mₙ₋₁)
-    du[2*nMax]           = ks[6]*u[2*nMax-1]*u[1+nMax] - ks[7]*u[nMax]
-
-    # Tra monomers (5 reactions, 7 terms): 
-    #                        m₁->t₁          - t₁->m₁            - t₁->∅              - 2t₁->t₂              + t₂->2t₁            + tₙ->t₁+tₙ₋₁ for 3+2nMax<=n<=3nMax       - t₁+tₙ->tₙ₊₁ for 2+2nMax<=n<3nMax
-    du[1+nMax]             = ks[8]*u[1+nMax] - ks[9]*u[1+2*nMax] - ks[12]*u[1+2*nMax] - ks[10]*u[1+2*nMax]^2 + 2*ks[11]*u[2+nMax] + ks[11]*sum(@view u[3+2*nMax:3*nMax])    - ks[10]*sum(@view u[2+2*nMax:3*nMax-1])
-    # Tra dimers:            2t₁->t₂             - t₂->t₁            - t₂+t₁->t₃                     + t₃->t₂+t₁
-    du[2]                  = ks[2]*u[1+2*nMax]^2 − ks[3]*u[2+2*nMax] − ks[2]*u[2+2*nMax]*u[1+2*nMax] + ks[3]*u[3+2*nMax]
-    # Tra n-omers:     
-    #                          (t₁+tₙ₋₁->tₙ)             + (tₙ₊₁->tₙ+t₁) - (t₁+tₙ->tₙ₊₁)           - (tₙ->tₙ₋₁+t₁) for n=2+2nMax:3nMax-1
-    du[3+2*nMax:3*nMax-1] .= [ ks[10]*u[n-1]*u[1+2*nMax] + ks[11]*u[n+1] - ks[10]*u[n]*u[1+2*nMax] - ks[11]*u[n]   for n=3+2*nMax:3*nMax-1 ]
-    # # Tra nMax-omers: 
-    #                        (t₁+tₙ₋₁->tₙ)                  - (tₙ->t₁+tₙ₋₁)
-    du[3*nMax]             = ks[10]*u[3*nMax-1]*u[1+2*nMax] - ks[11]*u[3*nMax]
-
-    return du
+# vector to store the Reactions
+reactions = []
+push!(reactions, Reaction(k₀, nothing, [C[1]]))                      #, nothing, [1]))    # Insertion into cis. Reactant ∅; product X[1]; rate: zeroth order kinetics
+# push!(reactions, Reaction(k₁, [C[1]], [C[2]], [2], [1]))            # forming dimers
+for i=1:nMax-1
+    push!(reactions, Reaction(k₁, [C[i], C[1]], [C[i+1]]))           #, [1,1], [1])) # cis aggregation: second order kinetics
 end
+# push!(reactions, Reaction(k₃, [C[2]], [C[1]], [1], [2]))                # splitting dimers
+for i=2:nMax
+    push!(reactions, Reaction(k₂, [C[i]], [C[i-1],C[1]]))                #, [1], [1,1])) # cis splitting: first order kinetics        
+end
+push!(reactions, Reaction(k₃, [C[1]], [M[1]]))                           #, [1], [1])) # cis to medial: first order kinetics 
+push!(reactions, Reaction(k₄, [M[1]], [C[1]]))                       #, [1], [1])) # medial to cis: first order kinetics 
+
+# push!(reactions, Reaction(k₅, [M[1]], [M[2]], [2], [1]))        # forming dimers
+for i=1:nMax-1
+    push!(reactions, Reaction(k₅, [M[i],M[1]], [M[i+1]]))        #, [1,1], [1])) # med aggregation: second order kinetics
+end
+# push!(reactions, Reaction(k₆, [M[2]], [M[1]], [1], [2]))           # splitting dimers 
+for i=2:nMax
+    push!(reactions, Reaction(k₆, [M[i]], [M[i-1],M[1]]))           #, [1], [1,1])) # med splitting: first order kinetics                
+end
+push!(reactions, Reaction(k₇, [M[1]], [T[1]]))                          #, [1], [1])) # med to tran: first order kinetics        
+push!(reactions, Reaction(k₈, [T[1]], [M[1]]))                           #, [1], [1])) # tran to med: first order kinetics            
+
+# push!(reactions, Reaction(k₉, [T[1]], [T[2]], [2], [1]))        # forming dimers
+for i=1:nMax-1
+    push!(reactions, Reaction(k₉, [T[i],T[1]], [T[i+1]]))        #, [1,1], [1])) # tran aggregation: second order kinetics                
+end
+# push!(reactions, Reaction(k₁₀, [T[2]], [T[1]], [1], [2]))          # splitting dimers
+for i=2:nMax
+    push!(reactions, Reaction(k₁₀, [T[i]], [T[i-1],T[1]]))          #, [1], [1,1])) # tran splitting: first order kinetics                
+end
+push!(reactions, Reaction(k₁₁ , [T[1]], nothing))               #, [1], nothing)) # tran to ∅: first order kinetics            
+
+# Set up reaction system object 
+@named system = ReactionSystem(reactions, t, [collect(C); collect(M); collect(T)], [k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k₇,k₈,k₉,k₁₀,k₁₁])
+# Create problem object
+odeProblem = ODEProblem(system,u₀Map,(0.0,Inf),p)
+# Create integrator object
+integ = init(odeProblem,KenCarp3())
 
 # Function to update figure based on system iteration
 function animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
-    step!(integ, 1.0)
-	deterministicCisObservable[]  .= integ.u[1:nMax]
-    deterministicCisObservable[]  = deterministicCisObservable[]
-	deterministicMedObservable[]  .= integ.u[1+nMax:2*nMax]
-    deterministicMedObservable[]  = deterministicMedObservable[]
+    step!(integ, 10.0)
+	deterministicCisObservable[] .= integ.u[1:nMax]
+    deterministicCisObservable[] = deterministicCisObservable[]
+	deterministicMedObservable[] .= integ.u[1+nMax:2*nMax]
+    deterministicMedObservable[] = deterministicMedObservable[]
 	deterministicTraObservable[] .= integ.u[1+2*nMax:3*nMax]
     deterministicTraObservable[] = deterministicTraObservable[]
 end
@@ -99,8 +113,6 @@ function resetstep!(integ,deterministicCisObservable,deterministicMedObservable,
     deterministicTraObservable[] = deterministicTraObservable[]
 end
 
-# Initial conditions
-u0   = zeros(Float32,nMax*3)
 
 # Set up figure canvas
 fig = Figure(resolution=(1700,1500),fontsize=32)
@@ -130,18 +142,17 @@ axCis.ylabel = "Compartment size"
 
 
 # Set up observable objects for cis results
-deterministicCisObservable = Observable(u0[1:nMax].*volume)
+deterministicCisObservable = Observable(u₀[1:nMax].*volume)
 # Set up observable objects for med results
-deterministicMedObservable = Observable(u0[1+nMax:2*nMax].*volume)
+deterministicMedObservable = Observable(u₀[1+nMax:2*nMax].*volume)
 # Set up observable objects for tran results
-deterministicTraObservable = Observable(u0[1+2*nMax:3*nMax].*volume)
+deterministicTraObservable = Observable(u₀[1+2*nMax:3*nMax].*volume)
 
 yVals = collect(1:nMax)
 
 lines!(axCis, deterministicCisObservable, yVals, color=(:red,1.0),   linewidth=6)
 lines!(axMed, deterministicMedObservable, yVals, color=(:green,1.0), linewidth=6)
 lines!(axTra, deterministicTraObservable, yVals, color=(:blue,1.0),  linewidth=6)
-
 
 # Set up parameter sliders
 parameterSliders = SliderGrid(
@@ -161,17 +172,6 @@ parameterSliders = SliderGrid(
 )
 # Pull parameters from slider positions
 kObservables = [s.value for s in parameterSliders.sliders]
-ks= ones(Float32,12)
-
-# Setup parameters for ODE
-p = @dict nMax ks
-p = NamedTuple([pair for pair in p])
-
-# Set up integrator for each iteration
-prob = ODEProblem(deterministicModel!, u0, (0.0,1000), p)
-integ = init(prob,Tsit5())
-
-# solve!(integ)
 
 # Add stop/start button
 run = Button(fig[2,1]; label = "Start/Stop", tellwidth = false)
@@ -199,10 +199,10 @@ on(run.clicks) do clicks
     @async while isrunning[]       
         isopen(fig.scene) || break # ensures computations stop if closed window
         for i=1:12
-            integ.p.ks[i] = kObservables[i][]
+            integ.p[i] = kObservables[i][]
         end        
         animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)        
-        sleep(0.01) # yield()
+        sleep(0.1) # yield()
     end
 end
 

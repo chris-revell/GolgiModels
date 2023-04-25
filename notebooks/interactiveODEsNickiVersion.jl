@@ -30,7 +30,6 @@ using UnPack
 using GeometryBasics
 using FileIO
 using FastBroadcast
-using OrdinaryDiffEq
 
 nMax      = 100    #nMax
 volume    = 1.0    #volume
@@ -39,48 +38,42 @@ function deterministicModel!(du,u,p,t)
 
     @unpack nMax,ks = p
 
-    # Cis monomers (6 reactions, 7 terms): 
-    #               ∅->c₁ - c₁->m₁     + m₁->c₁          - 2c₁->c₂        + c₂->2c₁      + cₙ->c₁+cₙ₋₁ for 3<=n<=nMax - c₁+cₙ->cₙ₊₁ for 2<=n<nMax
-    du[1]         = ks[1] - ks[4]*u[1] + ks[5]*u[1+nMax] - 2*ks[2]*u[1]^2 + 2*ks[3]*u[2] + ks[3]*sum(@view u[3:nMax]) - ks[2]*sum(@view u[2:nMax-1])
-    # Cis dimers:   2c₁->c₂      - c₂->2c₁    - c₂+c₁->c₃       + c₃->c₂+c₁
-    du[2]         = ks[2]*u[1]^2 − ks[3]*u[2] − ks[2]*u[2]*u[1] + ks[3]*u[3]
-    # Cis n-omers: 
-    #                 (c₁+cₙ₋₁->cₙ)     + (cₙ₊₁->cₙ+c₁) - (c₁+cₙ->cₙ₊₁)   - (cₙ->cₙ₋₁+c₁) for n=2:nMax-1
-    du[3:nMax-1] .= [ ks[2]*u[n-1]*u[1] + ks[3]*u[n+1]  - ks[2]*u[n]*u[1] - ks[3]*u[n]    for n=3:nMax-1 ]
-    # Cis nMax-omers: 
-    #               (c₁+cₙ₋₁->cₙ)        - (cₙ->c₁+cₙ₋₁)
-    du[nMax]      = ks[2]*u[nMax-1]*u[1] - ks[3]*u[nMax]
+    # Cis monomers: ∅->cis₁ + med₁->cis₁ + cis₂->2cis₁ - cis₁->med₁ - 2cis₁->cis₂, cisₙ->cis₁+cisₙ₋₁ for n>=3, cis₁+cisₙ->cisₙ₊₁ for n>=2 (n=1 in first line)
+    du[1] = ks[1][] - ks[4][]*u[1] + ks[5][]*u[1+nMax] - ks[2][]*u[1]^2 - ks[2][]*u[1]*sum(u[2:nMax-1]) + 2*ks[3][]*u[2] + ks[3][]*sum(u[3:nMax])
+    # Cis dimers: cis₁+cis₁->cis₂ - cis₂->cis₁ - cis₂+cis₁->cis₃ + cis₃->cis₂+cis₁
+    du[2] = (ks[2][]*u[1]^2)/2 − ks[3][]*u[2] − ks[2][]*u[2]*u[1,1] + ks[3][]*u[3]
+    # Cis n-omers: (cis₁+cisₙ₋₁->cisₙ) + (cisₙ₊₁->cisₙ+cis₁) - (cis₁+cisₙ->cisₙ₊₁) - (cisₙ->cisₙ₋₁+cis₁) for n=2:nMax-1
+    du[3:nMax-1] .= [ks[2][]*u[n-1]*u[1] + ks[3][]*u[n+1] - ks[2][]*u[n]*u[1] - ks[3][]*u[n] for n=3:nMax-1]
+    # Cis nMax-omers: (cis₁+cisₙ₋₁->cisₙ) - (cisₙ->cis₁+cisₙ₋₁)
+    du[nMax] = ks[2][]*u[nMax-1]*u[1] - ks[3][]*u[nMax]
 
-    # Med monomers (6 reactions, 8 terms): 
-    #                      c₁->m₁     - m₁->c₁          - m₁->t₁          + t₁->m₁            - 2m₁->m₂             + m₂->2m₁           + mₙ->m₁+mₙ₋₁ for 3+nMax<=n<=2nMax  - m₁+mₙ->mₙ₊₁ for 2+nMax<=n<2nMax
-    du[1+nMax]           = ks[4]*u[1] - ks[5]*u[1+nMax] - ks[8]*u[1+nMax] + ks[9]*u[1+2*nMax] - 2*ks[6]*u[1+nMax]^2 + 2*ks[7]*u[2+nMax] + ks[7]*sum(@view u[3+nMax:2*nMax]) - ks[6]*sum(@view u[2+nMax:2*nMax-1])
-    # Med dimers:          2m₁->m₂           - m₂->m₁          - m₂+m₁->m₃                 + m₃->m₂+m₁
-    du[2]                = ks[2]*u[1+nMax]^2 − ks[3]*u[2+nMax] − ks[2]*u[2+nMax]*u[1+nMax] + ks[3]*u[3+nMax]
-    # Med n-omers: 
-    #                        (m₁+mₙ₋₁->mₙ)          + (mₙ₊₁->mₙ+m₁) - (m₁+mₙ->mₙ₊₁)        - (mₙ->mₙ₋₁+m₁) for n=2+nMax:2nMax-1
-    du[3+nMax:2*nMax-1] .= [ ks[6]*u[n-1]*u[1+nMax] + ks[7]*u[n+1]  - ks[6]*u[n]*u[1+nMax] - ks[7]*u[n]    for n=3+nMax:2*nMax-1 ]
-    # Med nMax-omers: 
-    #                      (m₁+mₙ₋₁->mₙ)               - (mₙ->m₁+mₙ₋₁)
-    du[2*nMax]           = ks[6]*u[2*nMax-1]*u[1+nMax] - ks[7]*u[nMax]
+    # Med monomers: cis₁->med₁ + tran₁->med₁ - med₁->cis₁ - med₁->tran₁ + med₂->2med₁ - med₁->tran₁ - 2med₁->med₂, medₙ->med₁+medₙ₋₁ for n>=3 (n=1,2 in first line), med₁+medₙ->medₙ₊₁ for n>=2 (n=1 in first line)
+    du[1+nMax] = ks[4][]*u[1] - ks[5][]*u[1+nMax] + ks[9][]*u[1+2*nMax] - ks[8][]*u[1+nMax] - ks[6][]*u[1+nMax]^2 - ks[6][]*u[1+nMax]*sum(u[2+nMax:2*nMax-1]) + 2*ks[6][]*u[2+nMax] + ks[7][]*sum(u[3+nMax:2*nMax])
+    # Med dimers: med₁+med₁->med₂ - med₂->med₁ - med₂+med₁->med₃ + med₃->med₂+med₁
+    du[2+nMax] = (ks[2][]*u[1+nMax]^2)/2 − ks[3][]*u[2+nMax] − ks[2][]*u[2+nMax]*u[1+nMax] + ks[3][]*u[3+nMax]
+    # Med n-omers: (med₁+medₙ₋₁->medₙ) + (medₙ₊₁->medₙ+med₁) - (med₁+medₙ->medₙ₊₁) - (medₙ->medₙ₋₁+med₁) for n=2:nMax-1
+    du[3+nMax:2*nMax-1] .= [ks[6][]*u[n-1+nMax]*u[1+nMax] + ks[7][]*u[n+1+nMax] - ks[6][]*u[n+nMax]*u[1+nMax] - ks[7][]*u[n+nMax] for n=3:nMax-1]
+    # Med nMax-omers: (med₁+medₙ₋₁->medₙ) - (medₙ->med₁+medₙ₋₁)
+    du[2*nMax] = ks[6][]*u[2*nMax-1]*u[1+nMax] - ks[7][]*u[2*nMax]
 
-    # Tra monomers (5 reactions, 7 terms): 
-    #                        m₁->t₁          - t₁->m₁            - t₁->∅              - 2t₁->t₂              + t₂->2t₁            + tₙ->t₁+tₙ₋₁ for 3+2nMax<=n<=3nMax       - t₁+tₙ->tₙ₊₁ for 2+2nMax<=n<3nMax
-    du[1+nMax]             = ks[8]*u[1+nMax] - ks[9]*u[1+2*nMax] - ks[12]*u[1+2*nMax] - ks[10]*u[1+2*nMax]^2 + 2*ks[11]*u[2+nMax] + ks[11]*sum(@view u[3+2*nMax:3*nMax])    - ks[10]*sum(@view u[2+2*nMax:3*nMax-1])
-    # Tra dimers:            2t₁->t₂             - t₂->t₁            - t₂+t₁->t₃                     + t₃->t₂+t₁
-    du[2]                  = ks[2]*u[1+2*nMax]^2 − ks[3]*u[2+2*nMax] − ks[2]*u[2+2*nMax]*u[1+2*nMax] + ks[3]*u[3+2*nMax]
-    # Tra n-omers:     
-    #                          (t₁+tₙ₋₁->tₙ)             + (tₙ₊₁->tₙ+t₁) - (t₁+tₙ->tₙ₊₁)           - (tₙ->tₙ₋₁+t₁) for n=2+2nMax:3nMax-1
-    du[3+2*nMax:3*nMax-1] .= [ ks[10]*u[n-1]*u[1+2*nMax] + ks[11]*u[n+1] - ks[10]*u[n]*u[1+2*nMax] - ks[11]*u[n]   for n=3+2*nMax:3*nMax-1 ]
-    # # Tra nMax-omers: 
-    #                        (t₁+tₙ₋₁->tₙ)                  - (tₙ->t₁+tₙ₋₁)
-    du[3*nMax]             = ks[10]*u[3*nMax-1]*u[1+2*nMax] - ks[11]*u[3*nMax]
+    # Tran monomers: med₁->tran₁ - tran₁->∅ - tran₁->med₁ + tran₂->2tran₁ - 2tran₁->tran₂, tranₙ->tran₁+tranₙ₋₁ for n>=3 (n=1,2 in first line), tran₁+tranₙ->tranₙ₊₁ for n>=2 (n=1 in first line)
+    du[1+2*nMax] = ks[8][]*u[1+nMax] - ks[9][]*u[1+2*nMax] - ks[12][]*u[1+2*nMax] - ks[10][]*u[1+2*nMax]^2 - ks[10][]*u[1+2*nMax]*sum(u[2+2*nMax:3*nMax-1]) + 2*ks[11][]*u[2+2*nMax] + ks[11][]*sum(u[3+2*nMax:3*nMax])
+    # Tran dimers: tran₁+tran₁->tran₂ - tran₂->tran₁ - tran₂+tran₁->tran₃ + tran₃->tran₂+tran₁
+    du[2+2*nMax] = (ks[2][]*u[1+2*nMax]^2)/2 − ks[3][]*u[2+2*nMax] − ks[2][]*u[2+2*nMax]*u[1+2*nMax] + ks[3][]*u[3+2*nMax]
+    # Tran n-omers: (tran₁+tranₙ₋₁->tranₙ) + (tranₙ₊₁->tranₙ+tran₁) - (tran₁+tranₙ->tranₙ₊₁) - (tranₙ->tranₙ₋₁+tran₁) for n=2:nMax-1
+    du[3+2*nMax:3*nMax-1] .= [ks[10][]*u[n-1+2*nMax]*u[1+2*nMax] + ks[11][]*u[n+1+2*nMax] - ks[10][]*u[n+2*nMax]*u[1+2*nMax] - ks[11][]*u[n+2*nMax] for n=3:nMax-1]
+    # Tran nMax-omers: (tran₁+tranₙ₋₁->tranₙ) - (tranₙ->tran₁+tranₙ₋₁)
+    du[3*nMax] = ks[10][]*u[3*nMax-1]*u[1+2*nMax] - ks[11][]*u[3*nMax]
 
     return du
 end
 
 # Function to update figure based on system iteration
 function animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
-    step!(integ, 1.0)
+    step!(integ, 10.0)
+    # xlims!(axCis,(0.0,max(5.0,maximum(integ.u))))
+    # xlims!(axMed,(0.0,max(5.0,maximum(integ.u))))
+    # xlims!(axTra,(0.0,max(5.0,maximum(integ.u))))
 	deterministicCisObservable[]  .= integ.u[1:nMax]
     deterministicCisObservable[]  = deterministicCisObservable[]
 	deterministicMedObservable[]  .= integ.u[1+nMax:2*nMax]
@@ -100,7 +93,7 @@ function resetstep!(integ,deterministicCisObservable,deterministicMedObservable,
 end
 
 # Initial conditions
-u0   = zeros(Float32,nMax*3)
+u0   = zeros(nMax*3)
 
 # Set up figure canvas
 fig = Figure(resolution=(1700,1500),fontsize=32)
@@ -150,28 +143,26 @@ parameterSliders = SliderGrid(
     (label="k₁,  c₁+cₙ → cₙ₊₁" , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
     (label="k₂,  cₙ → c₁+cₙ₋₁" , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
     (label="k₃,  c₁ → m₁     " , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
-    (label="k₄,  m₁ → c₁     " , range=0.0:0.1:2.0, startvalue=0.0, format="{:.2f}"),
+    (label="k₄,  m₁ → c₁     " , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
     (label="k₅,  m₁+mₙ → mₙ₊₁" , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
     (label="k₆,  mₙ → m₁+mₙ₋₁" , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
     (label="k₇,  m₁ → t₁     " , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
-    (label="k₈,  t₁ → m₁     " , range=0.0:0.1:2.0, startvalue=0.0, format="{:.2f}"),
+    (label="k₈,  t₁ → m₁     " , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
     (label="k₉,  t₁+tₙ → tₙ₊₁" , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
-    (label="k₁₀, tₙ → t₁+tₙ₋₁" , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
+    (label="k₁₀, mₙ → m₁+mₙ₋₁" , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}"),
     (label="k₁₁, t₁ → ∅      " , range=0.0:0.1:2.0, startvalue=1.0, format="{:.2f}");
 )
-# Pull parameters from slider positions
-kObservables = [s.value for s in parameterSliders.sliders]
-ks= ones(Float32,12)
 
-# Setup parameters for ODE
+# Pull parameters from slider positions
+ks = [s.value for s in parameterSliders.sliders]
+
+# p = Dict{String,Any}()
 p = @dict nMax ks
 p = NamedTuple([pair for pair in p])
 
 # Set up integrator for each iteration
-prob = ODEProblem(deterministicModel!, u0, (0.0,1000), p)
+prob = ODEProblem(deterministicModel!, u0, (0.0,Inf), p)
 integ = init(prob,Tsit5())
-
-# solve!(integ)
 
 # Add stop/start button
 run = Button(fig[2,1]; label = "Start/Stop", tellwidth = false)
@@ -198,11 +189,8 @@ end
 on(run.clicks) do clicks
     @async while isrunning[]       
         isopen(fig.scene) || break # ensures computations stop if closed window
-        for i=1:12
-            integ.p.ks[i] = kObservables[i][]
-        end        
         animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)        
-        sleep(0.01) # yield()
+        yield() #isrunning[] = !isrunning[]
     end
 end
 

@@ -10,40 +10,43 @@ using Catalyst
 # using UnPack
 
 # Find all possible reactions pairs that result in oligomers with size <= nMax    
-function allReactions(nMax,C,M,T,K₀,K₁,K₂,K₃,K₄,K₅,K₆,K₇,K₈,K₉,K₁₀,K₁₁)
-
-    # @unpack :K₀ :K₁ :K₂ :K₃ :K₄ :K₅ :K₆ :K₇ :K₈ :K₉ :K₁₀ :K₁₁ = p
+function allReactions(nMax,C,M,T,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k₈,k₉,k₁₀,k₁₁)
 
     # vector to store the Reactions
     reactions = []
+    
+    push!(reactions, Reaction(k₀, nothing, [C[1]]))            # ∅->c₁
+    push!(reactions, Reaction(k₁, [C[1]], [C[2]], [2], [1]))   # 2c₁->c₂
+    push!(reactions, Reaction(k₃, [C[2]], [C[1]], [1], [2]))   # c₂->2c₁
+    for i=2:nMax-1
+        push!(reactions, Reaction(k₁, [C[i], C[1]], [C[i+1]])) # c₁+cₙ->cₙ₊₁ for 2<=n<nMax
+    end
+    for i=3:nMax
+        push!(reactions, Reaction(k₂, [C[i]], [C[i-1],C[1]]))  # cₙ->c₁+cₙ₋₁ for 3<=n<=nMax
+    end
+    push!(reactions, Reaction(k₃, [C[1]], [M[1]]))             # c₁->m₁
+    push!(reactions, Reaction(k₄, [M[1]], [C[1]]))             # m₁->c₁
 
-    push!(reactions, Reaction(K₀, nothing, [C[1]]))                      #, nothing, [1]))    # Insertion into cis. Reactant ∅; product X[1]; rate: zeroth order kinetics
-    for i=1:nMax-1
-        push!(reactions, Reaction(K₁, [C[i], C[1]], [C[i+1]]))           #, [1,1], [1])) # cis aggregation: second order kinetics
+    push!(reactions, Reaction(k₅, [M[1]], [M[2]], [2], [1]))   # 2m₁->m₂
+    push!(reactions, Reaction(k₆, [M[2]], [M[1]], [1], [2]))   # m₂->2m₁
+    for i=2:nMax-1
+        push!(reactions, Reaction(k₅, [M[i],M[1]], [M[i+1]]))  # m₁+mₙ->mₙ₊₁ for 2<=n<nMax
     end
-    for i=2:nMax
-        push!(reactions, Reaction(K₂, [C[i]], [C[i-1],C[1]]))                #, [1], [1,1])) # cis splitting: first order kinetics        
+    for i=3:nMax
+        push!(reactions, Reaction(k₆, [M[i]], [M[i-1],M[1]]))  # mₙ->m₁+mₙ₋₁ for 3<=n<=2nMax
     end
-    push!(reactions, Reaction(K₃, [C[1]], [M[1]]))                           #, [1], [1])) # cis to medial: first order kinetics 
-    
-    push!(reactions, Reaction(K₄, [M[1]], [C[1]]))                       #, [1], [1])) # medial to cis: first order kinetics 
-    for i=1:nMax-1
-        push!(reactions, Reaction(K₅, [M[i],M[1]], [M[i+1]]))        #, [1,1], [1])) # med aggregation: second order kinetics
+    push!(reactions, Reaction(k₇, [M[1]], [T[1]]))             # m₁->t₁
+    push!(reactions, Reaction(k₈, [T[1]], [M[1]]))             # t₁->m₁
+
+    push!(reactions, Reaction(k₉, [T[1]], [T[2]], [2], [1]))   # 2t₁->t₂
+    push!(reactions, Reaction(k₁₀, [T[2]], [T[1]], [1], [2]))  # t₂->2t₁
+    for i=2:nMax-1
+        push!(reactions, Reaction(k₉, [T[i],T[1]], [T[i+1]]))  # t₁+tₙ->tₙ₊₁ for 2<=n<nMax
     end
-    for i=2:nMax
-        push!(reactions, Reaction(K₆, [M[i]], [M[i-1],M[1]]))           #, [1], [1,1])) # med splitting: first order kinetics                
+    for i=3:nMax
+        push!(reactions, Reaction(k₁₀, [T[i]], [T[i-1],T[1]])) # tₙ->t₁+tₙ₋₁ for 3<=n<=2nMax
     end
-    push!(reactions, Reaction(K₇, [M[1]], [T[1]]))                          #, [1], [1])) # med to tran: first order kinetics        
-    
-    push!(reactions, Reaction(K₈, [T[1]], [M[1]]))                           #, [1], [1])) # tran to med: first order kinetics            
-    for i=1:nMax-1
-        push!(reactions, Reaction(K₉, [T[i],T[1]], [T[i+1]]))        #, [1,1], [1])) # tran aggregation: second order kinetics                
-    end
-    for i=2:nMax
-        push!(reactions, Reaction(K₁₀, [T[i]], [T[i-1],T[1]]))          #, [1], [1,1])) # tran splitting: first order kinetics                
-    end
-    
-    push!(reactions, Reaction(K₁₁ , [T[1]], nothing))               #, [1], nothing)) # tran to ∅: first order kinetics            
+    push!(reactions, Reaction(k₁₁ , [T[1]], nothing))          # t₁->∅ 
     
     return reactions
 
