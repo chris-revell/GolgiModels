@@ -85,11 +85,11 @@ image!(axDiagram,rotr90(load(joinpath("_research","model.png"))))
 hidedecorations!(axDiagram)
 hidespines!(axDiagram)
 axCis = Axis(fig[1,1], aspect=0.55, ylabel = "Compartment size")
-xlims!(axCis,(0,3))
+GLMakie.xlims!(axCis,(0,3))
 axMed = Axis(fig[1,2], aspect=0.55, yticksvisible=false)
-xlims!(axMed,(0,3))
+GLMakie.xlims!(axMed,(0,3))
 axTra = Axis(fig[1,3], aspect=0.55, yticksvisible=false)
-xlims!(axTra,(0,3))
+GLMakie.xlims!(axTra,(0,3))
 Label(fig[1,1,Bottom()],"Cis",fontsize=32)
 Label(fig[1,2,Bottom()],"Medial",fontsize=32)
 Label(fig[1,3,Bottom()],"Trans",fontsize=32)
@@ -97,18 +97,18 @@ Label(fig[1,3,Bottom()],"Trans",fontsize=32)
 # Set up parameter sliders
 parameterSliders = SliderGrid(
     fig[1,4],
-    (label="k₁,  ∅ → c₁      " , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-    (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-    (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-    (label="k₄,  c₁ → m₁     " , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-    (label="k₅,  m₁ → c₁     " , range=0.0:1.0:120.0, startvalue=000.0, format="{:.2f}"),
-    (label="k₆,  m₁+mₙ → mₙ₊₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-    (label="k₇,  mₙ → m₁+mₙ₋₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-    (label="k₈,  m₁ → t₁     " , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-    (label="k₉,  t₁ → m₁     " , range=0.0:1.0:120.0, startvalue=000.0, format="{:.2f}"),
-    (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-    (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-    (label="k₁₂, t₁ → ∅      " , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}");
+    (label="k₁,  ∅ → c₁      " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+    (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+    (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+    (label="k₄,  c₁ → m₁     " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+    (label="k₅,  m₁ → c₁     " , range=0.0:0.01:1.2, startvalue=0.0, format="{:.2f}"),
+    (label="k₆,  m₁+mₙ → mₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+    (label="k₇,  mₙ → m₁+mₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+    (label="k₈,  m₁ → t₁     " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+    (label="k₉,  t₁ → m₁     " , range=0.0:0.01:1.2, startvalue=0.0, format="{:.2f}"),
+    (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+    (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+    (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}");
 )
 
 # Add stop/start button
@@ -128,15 +128,15 @@ tMax    = Inf
 
 # Catalyst system setup
 # Symbolic system parameters: rate constants 
-@parameters k[1:12] 
+@parameters k[1:12] t
 # Symbolic system variables: cis, medial, and trans compartment size counts 
-@variables t C(t)[1:nMax] M(t)[1:nMax] T(t)[1:nMax] 
+@variables C(t)[1:nMax] M(t)[1:nMax] T(t)[1:nMax] 
 # Use these parameters and variables to define a reaction system 
 # vector to store the Reactions
 system = allReactions(nMax,C,M,T,k,t)
 
 # Map symbolic paramters to values. Collect symbolic parameters into a vector.
-p = Pair.(collect(k),100.0.*ones(Float32,12))
+p = Pair.(collect(k),ones(Float32,12))
 # Map symbolic state vector to vector of values. Collect symbolic state variables into a single vector.
 u₀Map = Pair.([collect(C); collect(M); collect(T)], zeros(Float32,3*nMax))
 

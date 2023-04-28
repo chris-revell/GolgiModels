@@ -99,18 +99,18 @@ function guiFigureSetup()
     # Set up parameter sliders
     parameterSliders = SliderGrid(
         fig[1,4],
-        (label="k₁,  ∅ → c₁      " , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-        (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-        (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-        (label="k₄,  c₁ → m₁     " , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-        (label="k₅,  m₁ → c₁     " , range=0.0:1.0:120.0, startvalue=000.0, format="{:.2f}"),
-        (label="k₆,  m₁+mₙ → mₙ₊₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-        (label="k₇,  mₙ → m₁+mₙ₋₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-        (label="k₈,  m₁ → t₁     " , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-        (label="k₉,  t₁ → m₁     " , range=0.0:1.0:120.0, startvalue=000.0, format="{:.2f}"),
-        (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-        (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}"),
-        (label="k₁₂, t₁ → ∅      " , range=0.0:1.0:120.0, startvalue=100.0, format="{:.2f}");
+        (label="k₁,  ∅ → c₁      " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+        (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+        (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+        (label="k₄,  c₁ → m₁     " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+        (label="k₅,  m₁ → c₁     " , range=0.0:0.01:1.2, startvalue=0.0, format="{:.2f}"),
+        (label="k₆,  m₁+mₙ → mₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+        (label="k₇,  mₙ → m₁+mₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+        (label="k₈,  m₁ → t₁     " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+        (label="k₉,  t₁ → m₁     " , range=0.0:0.01:1.2, startvalue=0.0, format="{:.2f}"),
+        (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+        (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
+        (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}");
     )
 
     # Add stop/start button
