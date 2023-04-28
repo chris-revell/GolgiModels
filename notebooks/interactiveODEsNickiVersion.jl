@@ -69,7 +69,7 @@ function deterministicModel!(du,u,p,t)
 end
 
 # Function to update figure based on system iteration
-function animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+function animStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
     step!(integ, 10.0)
     # xlims!(axCis,(0.0,max(5.0,maximum(integ.u))))
     # xlims!(axMed,(0.0,max(5.0,maximum(integ.u))))
@@ -82,7 +82,7 @@ function animstep!(integ,deterministicCisObservable,deterministicMedObservable,d
     deterministicTraObservable[] = deterministicTraObservable[]
 end
 
-function resetstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+function resetStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
     reinit!(integ,erase_sol=true)
     deterministicCisObservable[] .= integ.u[1:nMax]
     deterministicCisObservable[] = deterministicCisObservable[]
@@ -182,14 +182,14 @@ on(run.clicks) do clicks
     isrunning[] = !isrunning[]
 end
 on(reset.clicks) do clicks    
-    resetstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+    resetStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
     isrunning[] = false
 end
 
 on(run.clicks) do clicks
     @async while isrunning[]       
         isopen(fig.scene) || break # ensures computations stop if closed window
-        animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)        
+        animStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)        
         yield() #isrunning[] = !isrunning[]
     end
 end

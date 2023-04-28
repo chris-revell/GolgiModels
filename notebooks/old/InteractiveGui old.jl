@@ -79,7 +79,7 @@ function deterministicModel!(du,u,p,t)
 end
 
 # Function to update figure based on system iteration
-function animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTranObservable,nMax)
+function animStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTranObservable,nMax)
     step!(integ)
     uDeterministic = integ.u
     xlims!(axCis,(0.0,max(5.0,maximum(uDeterministic))))
@@ -180,7 +180,7 @@ on(run.clicks) do clicks; isrunning[] = !isrunning[]; end
 on(run.clicks) do clicks
     @async while isrunning[]
         isopen(fig.scene) || break # ensures computations stop if closed window
-        animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTranObservable,nMax)        
+        animStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTranObservable,nMax)        
         # sleep(0.000001) # or `yield()` instead
     end
 end

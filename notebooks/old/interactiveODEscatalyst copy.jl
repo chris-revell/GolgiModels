@@ -93,7 +93,7 @@ odeProblem = ODEProblem(system,u₀Map,(0.0,Inf),p)
 integ = init(odeProblem,KenCarp3())
 
 # Function to update figure based on system iteration
-function animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+function animStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
     step!(integ, 10.0)
 	deterministicCisObservable[] .= integ.u[1:nMax]
     deterministicCisObservable[] = deterministicCisObservable[]
@@ -103,7 +103,7 @@ function animstep!(integ,deterministicCisObservable,deterministicMedObservable,d
     deterministicTraObservable[] = deterministicTraObservable[]
 end
 
-function resetstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+function resetStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
     reinit!(integ,erase_sol=true)
     deterministicCisObservable[] .= integ.u[1:nMax]
     deterministicCisObservable[] = deterministicCisObservable[]
@@ -191,7 +191,7 @@ on(run.clicks) do clicks
     isrunning[] = !isrunning[]
 end
 on(reset.clicks) do clicks    
-    resetstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+    resetStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
     isrunning[] = false
 end
 
@@ -201,7 +201,7 @@ on(run.clicks) do clicks
         for i=1:12
             integ.p[i] = kObservables[i][]
         end        
-        animstep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)        
+        animStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)        
         sleep(0.1) # yield()
     end
 end

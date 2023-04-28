@@ -26,7 +26,7 @@ function progress_for_one_step!(integ)
 end
 
 # Function to update figure based on system iteration
-function animstep!(integ, positions, circles)
+function animStep!(integ, positions, circles)
 	u = progress_for_one_step!(integ)
 	circles[] = [
 		Circle(positions[1],0.1*sqrt(u[1])),
@@ -133,7 +133,7 @@ on(run.clicks) do clicks; isrunning[] = !isrunning[]; end
 on(run.clicks) do clicks
     @async while isrunning[]
         isopen(fig.scene) || break # ensures computations stop if closed window
-        animstep!(integ, positions, circles)
+        animStep!(integ, positions, circles)
         sleep(0.02) # or `yield()` instead
     end
 end
