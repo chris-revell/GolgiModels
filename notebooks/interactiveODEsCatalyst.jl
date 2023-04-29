@@ -88,11 +88,13 @@ axCis = Axis(fig[1,1], aspect=0.55, ylabel = "Compartment size")
 GLMakie.xlims!(axCis,(0,3))
 axMed = Axis(fig[1,2], aspect=0.55, yticksvisible=false)
 GLMakie.xlims!(axMed,(0,3))
-axTra = Axis(fig[1,3], aspect=0.55, yticksvisible=false)
+axTra = Axis(fig[1,3], aspect=0.55, yticksvisible=false) 
 GLMakie.xlims!(axTra,(0,3))
 Label(fig[1,1,Bottom()],"Cis",fontsize=32)
 Label(fig[1,2,Bottom()],"Medial",fontsize=32)
 Label(fig[1,3,Bottom()],"Trans",fontsize=32)
+
+ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 
 # Set up parameter sliders
 parameterSliders = SliderGrid(
@@ -136,13 +138,12 @@ tMax    = Inf
 system = allReactions(nMax,C,M,T,k,t)
 
 # Map symbolic paramters to values. Collect symbolic parameters into a vector.
-p = Pair.(collect(k),ones(Float32,12))
+p = Pair.(collect(k),ksInit)
 # Map symbolic state vector to vector of values. Collect symbolic state variables into a single vector.
 u₀Map = Pair.([collect(C); collect(M); collect(T)], zeros(Float32,3*nMax))
 
 # Create problem object
 odeProblem = ODEProblem(system,u₀Map,(0.0,tMax),p)
-# odeProblem = convert(ODESystem(),system,u₀Map,(0.0,tMax),p)
 # Create integrator object
 integ = init(odeProblem,KenCarp3())
 

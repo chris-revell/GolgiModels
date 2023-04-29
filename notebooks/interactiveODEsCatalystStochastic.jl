@@ -144,7 +144,7 @@ tMax    = Inf
 system = allReactions(nMax,C,M,T,k,t)
 
 # Map symbolic paramters to values. Collect symbolic parameters into a vector.
-p = Pair.(collect(k),100.0*ones(Float32,12))
+p = Pair.(collect(k),[1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0])
 # Map symbolic state vector to vector of values. Collect symbolic state variables into a single vector.
 u₀Map = Pair.([collect(C); collect(M); collect(T)], zeros(Int32,3*nMax)) 
 

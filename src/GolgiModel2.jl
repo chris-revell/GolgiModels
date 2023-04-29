@@ -4,7 +4,7 @@
 #
 #  Created by Christopher Revell on dd/mm/yyyy.
 
-module GolgiModel
+module GolgiModel2
 
 using FromFile
 using DrWatson
@@ -15,8 +15,8 @@ using ModelingToolkit
 using DifferentialEquations
 using JumpProcesses
 
-@from "Visualise.jl" using Visualise
-@from "AllReactions.jl" using AllReactions
+@from "$(projectdir("src","Visualise.jl"))" using Visualise
+@from "$(projectdir("src","AllReactions.jl"))" using AllReactions
 
 # nMax= maximum compartment size
 # k₀  = ∅ToCis   
@@ -32,10 +32,10 @@ using JumpProcesses
 # k₁₀ = tranSplit
 # k₁₁ = tranTo∅  
 
-function golgiModel(nMax,tMax,volume,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k₈,k₉,k₁₀,k₁₁,nOutput)
+function golgiModel2(nMax,tMax,volume,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k₈,k₉,k₁₀,k₁₁,nOutput)
 
     # Symbolic system parameters: time and rate constants 
-    @parameters t K₀ K₁ K₂ K₃ K₄ K₅ K₆ K₇ K₈ K₉ K₁₀ K₁₁
+    @parameters t k[1:12]
     # Symbolic system variables: Vector of number/concentration for cis, medial, and trans
     @variables C(t)[1:nMax] M(t)[1:nMax] T(t)[1:nMax]
     
@@ -44,30 +44,28 @@ function golgiModel(nMax,tMax,volume,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k�
     # Set up reaction system object 
     # @named system = ReactionSystem(reactions, t, [collect(C); collect(M); collect(T)], [K₀,K₁,K₂,K₃,K₄,K₅,K₆,K₇,K₇,K₈,K₉,K₁₀,K₁₁])
     
-    system = allReactions(nMax,C,M,T,[K₀,K₁,K₂,K₃,K₄,K₅,K₆,K₇,K₈,K₉,K₁₀,K₁₁],t)
+    system = allReactions(nMax,C,M,T,k,t)
 
     # Solving stochastic model
     @info "Solving stochastic model"
     # Map symbolic rate constants to values for stochastic model 
-    p = [:K₀=>k₀, :K₁=>k₁, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
-    # p = [:K₀=>k₀/volume, :K₁=>k₁*volume, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅*volume, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉*volume, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
-    # Map symbolic state vectors to integer vector for stochastic model 
-    u₀ = zeros(Int64,3*nMax)
-    u₀Map = Pair.([collect(C); collect(M); collect(T)],u₀)
+    p = Pair.(collect(k),[k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k₈,k₉,k₁₀,k₁₁])
+    u₀Map = Pair.([collect(C); collect(M); collect(T)], zeros(Int32,3*nMax))
     # Convert to jump problem to solve 
     discreteprob  = DiscreteProblem(system, u₀Map, (0.0,tMax), p)
-    jumpProblem   = JumpProblem(system, discreteprob, Direct(),save_positions=(false,false)) # Converts system to a set of MassActionJumps
+    jumpProblem   = JumpProblem(system, discreteprob, Direct(), save_positions=(false,false))
+    integ = init(odeProblem,KenCarp3())
     stochasticSol = solve(jumpProblem, SSAStepper(), saveat=tMax/nOutput)
     
 
     @info "Solving deterministic model"
     # Map symbolic rate constants to values for stochastic model 
-    p2 = [:K₀=>k₀/volume, :K₁=>k₁*volume, :K₂=>k₂, :K₃=>k₃, :K₄=>k₄, :K₅=>k₅*volume, :K₆=>k₆, :K₇=>k₇, :K₈=>k₈, :K₉=>k₉*volume, :K₁₀=>k₁₀, :K₁₁=>k₁₁]
+    p2 = Pair.(collect(k),[k₀/volume, k₁*volume, k₂, k₃, k₄, k₅*volume, k₆, k₇, k₈, k₉*volume, k₁₀, k₁₁])
     # Map symbolic state vectors to float vector for stochastic model 
-    u₀ = zeros(Float64,3*nMax)
-    u₀Map = Pair.([collect(C); collect(M); collect(T)],u₀)    
+    u₀Map = Pair.([collect(C); collect(M); collect(T)], zeros(Float32,3*nMax))
     odeProblem = ODEProblem(system,u₀Map,(0.0,tMax),p2)
-    deterministicSol = solve(odeProblem, saveat=tMax/nOutput)
+    integ = init(odeProblem,KenCarp3())
+    deterministicSol = solve!(integ) #solve(odeProblem, KenCarp3(), saveat=tMax/nOutput)
     
     # Calculate time average for 101 time points correspoding to 101 frames in the visualisation 
     windowLength = nOutput÷100
@@ -77,8 +75,8 @@ function golgiModel(nMax,tMax,volume,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k�
     # Save data to file 
     params = @strdict nMax tMax volume k₀ k₁ k₂ k₃ k₄ k₅ k₆ k₇ k₈ k₉ k₁₀ k₁₁ nOutput
     fileName = savename(Dates.format(Dates.now(),"mm-dd-HH-MM"),params,connector="")
-    @info "Saving data as $fileName.jld2"
-    safesave(datadir("sims","$fileName.jld2"),@strdict deterministicSol stochasticSol params)
+    # @info "Saving data as $fileName.jld2"
+    # safesave(datadir("sims","$fileName.jld2"),@strdict deterministicSol stochasticSol params)
     
     # Visualise results 
     @info "Visualising results; saving as $fileName.mp4"
@@ -88,7 +86,7 @@ function golgiModel(nMax,tMax,volume,k₀,k₁,k₂,k₃,k₄,k₅,k₆,k₇,k�
 
 end
 
-export golgiModel
+export golgiModel2
 
 end
     

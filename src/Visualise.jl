@@ -23,9 +23,9 @@ function visualise(fileName,nMax,volume,stochasticSol,stochasticTimeAverages,det
     axCis = Axis(fig[1,1],aspect=0.5)
     axMed = Axis(fig[1,2],aspect=0.5,yticksvisible=false,yticklabelsvisible=false)
     axTra = Axis(fig[1,3],aspect=0.5,yticksvisible=false,yticklabelsvisible=false)
-    Label(fig[1,1,Bottom()],"Cis",textsize=32)
-    Label(fig[1,2,Bottom()],"Medial",textsize=32)
-    Label(fig[1,3,Bottom()],"Trans",textsize=32)    
+    Label(fig[1,1,Bottom()],"Cis",fontsize=32)
+    Label(fig[1,2,Bottom()],"Medial",fontsize=32)
+    Label(fig[1,3,Bottom()],"Trans",fontsize=32)    
     axCis.yticks = 0:10:nMax
     axCis.ylabel = "Compartment size"
     #upperLim=10
