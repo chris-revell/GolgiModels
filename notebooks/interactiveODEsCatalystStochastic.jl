@@ -78,58 +78,53 @@ function resetStep!(integ,stochasticCisObservable,stochasticMedObservable,stocha
     stochasticTraObservable[] = stochasticTraObservable[]
 end
 
-# Function to setup figure
-function guiFigureSetup()
-    # Set up figure canvas
-    fig = Figure(resolution=(1700,1500),fontsize=32)
-    axDiagram = Axis(fig[3,1:4],title="Model diagram",aspect=DataAspect())
-    image!(axDiagram,rotr90(load(joinpath("_research","model.png"))))
-    hidedecorations!(axDiagram)
-    hidespines!(axDiagram)
-    axCis = Axis(fig[1,1], aspect=0.55, ylabel = "Compartment size")
-    xlims!(axCis,(0,3))
-    axMed = Axis(fig[1,2], aspect=0.55, yticksvisible=false)
-    xlims!(axMed,(0,3))
-    axTra = Axis(fig[1,3], aspect=0.55, yticksvisible=false)
-    xlims!(axTra,(0,3))
-    Label(fig[1,1,Bottom()],"Cis",fontsize=32)
-    Label(fig[1,2,Bottom()],"Medial",fontsize=32)
-    Label(fig[1,3,Bottom()],"Trans",fontsize=32)
-
-    # Set up parameter sliders
-    parameterSliders = SliderGrid(
-        fig[1,4],
-        (label="k₁,  ∅ → c₁      " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-        (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-        (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-        (label="k₄,  c₁ → m₁     " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-        (label="k₅,  m₁ → c₁     " , range=0.0:0.01:1.2, startvalue=0.0, format="{:.2f}"),
-        (label="k₆,  m₁+mₙ → mₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-        (label="k₇,  mₙ → m₁+mₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-        (label="k₈,  m₁ → t₁     " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-        (label="k₉,  t₁ → m₁     " , range=0.0:0.01:1.2, startvalue=0.0, format="{:.2f}"),
-        (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-        (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-        (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}");
-    )
-
-    # Add stop/start button
-    run = Button(fig[2,1]; label = "Start/Stop", tellwidth = false)
-    reset = Button(fig[2,2]; label = "Reset", tellwidth = false)
-
-    colsize!(fig.layout, 1, Relative(0.25))
-    colsize!(fig.layout, 2, Relative(0.25))
-    colsize!(fig.layout, 3, Relative(0.25))
-    colsize!(fig.layout, 4, Relative(0.25))
-    rowsize!(fig.layout, 1, Aspect(1, 2.0))
-    rowsize!(fig.layout, 2, Aspect(1, 0.1))
-    resize_to_layout!(fig)
-
-    return fig, axCis, axMed, axTra, parameterSliders, run, reset
-end
+ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 
 
+# Set up figure canvas
+fig = Figure(resolution=(1700,1500),fontsize=32)
+axDiagram = Axis(fig[3,1:4],title="Model diagram",aspect=DataAspect())
+image!(axDiagram,rotr90(load(joinpath("_research","model.png"))))
+hidedecorations!(axDiagram)
+hidespines!(axDiagram)
+axCis = Axis(fig[1,1], aspect=0.55, ylabel = "Compartment size")
+xlims!(axCis,(0,3))
+axMed = Axis(fig[1,2], aspect=0.55, yticksvisible=false)
+xlims!(axMed,(0,3))
+axTra = Axis(fig[1,3], aspect=0.55, yticksvisible=false)
+xlims!(axTra,(0,3))
+Label(fig[1,1,Bottom()],"Cis",fontsize=32)
+Label(fig[1,2,Bottom()],"Medial",fontsize=32)
+Label(fig[1,3,Bottom()],"Trans",fontsize=32)
 
+# Set up parameter sliders
+parameterSliders = SliderGrid(
+    fig[1,4],
+    (label="k₁,  ∅ → c₁      " , range=0.0:0.01:1.2, startvalue=ksInit[1], format="{:.2f}"),
+    (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[2], format="{:.2f}"),
+    (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[3], format="{:.2f}"),
+    (label="k₄,  c₁ → m₁     " , range=0.0:0.01:1.2, startvalue=ksInit[4], format="{:.2f}"),
+    (label="k₅,  m₁ → c₁     " , range=0.0:0.01:1.2, startvalue=ksInit[5], format="{:.2f}"),
+    (label="k₆,  m₁+mₙ → mₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[6], format="{:.2f}"),
+    (label="k₇,  mₙ → m₁+mₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[7], format="{:.2f}"),
+    (label="k₈,  m₁ → t₁     " , range=0.0:0.01:1.2, startvalue=ksInit[8], format="{:.2f}"),
+    (label="k₉,  t₁ → m₁     " , range=0.0:0.01:1.2, startvalue=ksInit[9], format="{:.2f}"),
+    (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[10], format="{:.2f}"),
+    (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[11], format="{:.2f}"),
+    (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=ksInit[12], format="{:.2f}");
+)
+
+# Add stop/start button
+run = Button(fig[2,1]; label = "Start/Stop", tellwidth = false)
+reset = Button(fig[2,2]; label = "Reset", tellwidth = false)
+
+colsize!(fig.layout, 1, Relative(0.25))
+colsize!(fig.layout, 2, Relative(0.25))
+colsize!(fig.layout, 3, Relative(0.25))
+colsize!(fig.layout, 4, Relative(0.25))
+rowsize!(fig.layout, 1, Aspect(1, 2.0))
+rowsize!(fig.layout, 2, Aspect(1, 0.1))
+resize_to_layout!(fig)
 
 nMax    = 20             # Max compartment size
 tMax    = Inf
@@ -144,7 +139,7 @@ tMax    = Inf
 system = allReactions(nMax,C,M,T,k,t)
 
 # Map symbolic paramters to values. Collect symbolic parameters into a vector.
-p = Pair.(collect(k),[1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0])
+p = Pair.(collect(k),ksInit)
 # Map symbolic state vector to vector of values. Collect symbolic state variables into a single vector.
 u₀Map = Pair.([collect(C); collect(M); collect(T)], zeros(Int32,3*nMax)) 
 
@@ -154,8 +149,6 @@ jumpProblem   = JumpProblem(system, discreteprob, Direct(), save_positions=(fals
 # Create integrator object
 integ = init(jumpProblem, SSAStepper())#, saveat=tMax/nOutput)
 
-# Set up figure canvas
-fig, axCis, axMed, axTra, parameterSliders, run, reset = guiFigureSetup() 
 xLimTimeAv = [5.0]
 
 # Set up observable objects for cis, med, and trans results
@@ -183,9 +176,16 @@ end
 on(run.clicks) do clicks
     @async while isrunning[]       
         isopen(fig.scene) || break # ensures computations stop if closed window
-        for i=1:12
-            integ.p[i] = kObservables[i][]
-        end 
+        # for i=1:12
+        #     p[i] = Pair(k[i],kObservables[i][])
+        # end 
+        # u₀Map .= Pair.([collect(C); collect(M); collect(T)], integ.u)
+
+        # discreteprob  = DiscreteProblem(system, u₀Map, (0.0,tMax), p)
+        # jumpProblem   = remake(jumpProblem, prob=discreteprob)
+        # # Create integrator object
+        # integ = init(jumpProblem, SSAStepper())#, saveat=tMax/nOutput)
+
         animStep!(integ,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax,xLimTimeAv)
         sleep(0.1)
     end

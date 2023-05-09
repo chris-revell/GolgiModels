@@ -45,30 +45,32 @@ using FastBroadcast
 using OrdinaryDiffEq
 using Catalyst
 using FromFile
+using Format
 
 @from "$(projectdir("src","AllReactions.jl"))" using AllReactions
-# @from "$(projectdir("src","AnimStep.jl"))" using AnimStep
-# @from "$(projectdir("src","ResetStep.jl"))" using ResetStep
-# @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
 
 # Function to update figure based on system iteration
-function animStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax,xLimTimeAv)
+function animStep!(integ,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax,xLimTimeAv)
     step!(integ, 10.0)
-    # Find time averaged maximum value to set xlim
-    xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
-    xlims!(axCis,(0.0,1.1*xLimTimeAv[1]))
-    xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
-    xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))
 	deterministicCisObservable[] .= integ.u[1:nMax]
     deterministicCisObservable[] = deterministicCisObservable[]
 	deterministicMedObservable[] .= integ.u[1+nMax:2*nMax]
     deterministicMedObservable[] = deterministicMedObservable[]
 	deterministicTraObservable[] .= integ.u[1+2*nMax:3*nMax]
     deterministicTraObservable[] = deterministicTraObservable[]
+    # Find time averaged maximum value to set xlim
+    # if integ.t>100.0
+        xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
+        xlims!(axCis,(0.0,1.1*xLimTimeAv[1]))
+        xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
+        xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))
+    # else
+    #     xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
+    # end
 end
 
 # Function to reset figure
-function resetStep!(integ,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)
+function resetStep!(integ,axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)
     reinit!(integ,erase_sol=true)
     stochasticCisObservable[] .= integ.u[1:nMax]
     stochasticCisObservable[] = stochasticCisObservable[]
@@ -76,6 +78,9 @@ function resetStep!(integ,stochasticCisObservable,stochasticMedObservable,stocha
     stochasticMedObservable[] = stochasticMedObservable[]
 	stochasticTraObservable[] .= integ.u[1+2*nMax:3*nMax]
     stochasticTraObservable[] = stochasticTraObservable[]
+    xlims!(axCis,(0.0,3.0))
+    xlims!(axMed,(0.0,3.0))
+    xlims!(axTra,(0.0,3.0))
 end
 
 # Set up figure canvas
@@ -99,18 +104,18 @@ ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 # Set up parameter sliders
 parameterSliders = SliderGrid(
     fig[1,4],
-    (label="k₁,  ∅ → c₁      " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-    (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-    (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-    (label="k₄,  c₁ → m₁     " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-    (label="k₅,  m₁ → c₁     " , range=0.0:0.01:1.2, startvalue=0.0, format="{:.2f}"),
-    (label="k₆,  m₁+mₙ → mₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-    (label="k₇,  mₙ → m₁+mₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-    (label="k₈,  m₁ → t₁     " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-    (label="k₉,  t₁ → m₁     " , range=0.0:0.01:1.2, startvalue=0.0, format="{:.2f}"),
-    (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-    (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}"),
-    (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=1.0, format="{:.2f}");
+    (label="k₁,  ∅ → c₁      " , range=0.0:0.01:1.2, startvalue=ksInit[1], format="{:.2f}"),
+    (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[2], format="{:.2f}"),
+    (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[3], format="{:.2f}"),
+    (label="k₄,  c₁ → m₁     " , range=0.0:0.01:1.2, startvalue=ksInit[4], format="{:.2f}"),
+    (label="k₅,  m₁ → c₁     " , range=0.0:0.01:1.2, startvalue=ksInit[5], format="{:.2f}"),
+    (label="k₆,  m₁+mₙ → mₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[6], format="{:.2f}"),
+    (label="k₇,  mₙ → m₁+mₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[7], format="{:.2f}"),
+    (label="k₈,  m₁ → t₁     " , range=0.0:0.01:1.2, startvalue=ksInit[8], format="{:.2f}"),
+    (label="k₉,  t₁ → m₁     " , range=0.0:0.01:1.2, startvalue=ksInit[9], format="{:.2f}"),
+    (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[10], format="{:.2f}"),
+    (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[11], format="{:.2f}"),
+    (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=ksInit[12], format="{:.2f}");
 )
 
 # Add stop/start button
@@ -136,6 +141,8 @@ tMax    = Inf
 # Use these parameters and variables to define a reaction system 
 # vector to store the Reactions
 system = allReactions(nMax,C,M,T,k,t)
+
+ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 
 # Map symbolic paramters to values. Collect symbolic parameters into a vector.
 p = Pair.(collect(k),ksInit)
@@ -167,7 +174,8 @@ on(run.clicks) do clicks
     isrunning[] = !isrunning[]
 end
 on(reset.clicks) do clicks    
-    resetStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+    resetStep!(integ,axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)
+    sleep(0.1)
     isrunning[] = false
 end
 
@@ -177,7 +185,8 @@ on(run.clicks) do clicks
         for i=1:12
             integ.p[i] = kObservables[i][]
         end        
-        animStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax,xLimTimeAv)        
+        animStep!(integ,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax,xLimTimeAv)
+        # axCis.title="t=$(format(integ.t, precision=1))"
         sleep(0.1)
     end
 end
