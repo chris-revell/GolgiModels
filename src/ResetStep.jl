@@ -9,14 +9,17 @@ module ResetStep
 using GLMakie
 
 # Function to reset figure
-function resetStep!(integ,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)
+function resetStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax)
     reinit!(integ,erase_sol=true)
-    stochasticCisObservable[] .= integ.u[1:nMax]
-    stochasticCisObservable[] = stochasticCisObservable[]
-	stochasticMedObservable[] .= integ.u[1+nMax:2*nMax]
-    stochasticMedObservable[] = stochasticMedObservable[]
-	stochasticTraObservable[] .= integ.u[1+2*nMax:3*nMax]
-    stochasticTraObservable[] = stochasticTraObservable[]
+    cisObservable[] .= integ.u[1:nMax]
+    cisObservable[] = cisObservable[]
+	medObservable[] .= integ.u[1+nMax:2*nMax]
+    medObservable[] = medObservable[]
+	traObservable[] .= integ.u[1+2*nMax:3*nMax]
+    traObservable[] = traObservable[]
+    xlims!(axCis,(0.0,5.0))
+    xlims!(axMed,(0.0,5.0))
+    xlims!(axTra,(0.0,5.0))
 end
 
 
