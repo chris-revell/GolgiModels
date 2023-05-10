@@ -33,107 +33,65 @@
 # 1st order reaction: kₛ=kₒ/L 
 # 2nd order reaction: kₛ=kₒ/L²v²
 
-# using DynamicalSystems
 using DifferentialEquations
 using GLMakie
 using DrWatson
-using LinearAlgebra
 using UnPack
 using GeometryBasics
 using FileIO
-using FastBroadcast
-using OrdinaryDiffEq
 using Catalyst
 using FromFile
+using Format
 
 @from "$(projectdir("src","AllReactions.jl"))" using AllReactions
+@from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
 # @from "$(projectdir("src","AnimStep.jl"))" using AnimStep
 # @from "$(projectdir("src","ResetStep.jl"))" using ResetStep
-# @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
 
 # Function to update figure based on system iteration
-function animStep!(integ,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax,xLimTimeAv)
+function animStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax,xLimTimeAv)
     step!(integ, 10.0)
+	cisObservable[] .= integ.u[1:nMax]
+    cisObservable[] = cisObservable[]
+	medObservable[] .= integ.u[1+nMax:2*nMax]
+    medObservable[] = medObservable[]
+	traObservable[] .= integ.u[1+2*nMax:3*nMax]
+    traObservable[] = traObservable[]
     # Find time averaged maximum value to set xlim
-    xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
-    xlims!(axCis,(0.0,1.1*xLimTimeAv[1]))
-    xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
-    xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))
-	deterministicCisObservable[] .= integ.u[1:nMax]
-    deterministicCisObservable[] = deterministicCisObservable[]
-	deterministicMedObservable[] .= integ.u[1+nMax:2*nMax]
-    deterministicMedObservable[] = deterministicMedObservable[]
-	deterministicTraObservable[] .= integ.u[1+2*nMax:3*nMax]
-    deterministicTraObservable[] = deterministicTraObservable[]
+    # if integ.t>100.0
+        xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
+        xlims!(axCis,(0.0,1.1*xLimTimeAv[1]))
+        xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
+        xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))
+    # else
+    #     xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
+    # end
 end
 
 # Function to reset figure
-function resetStep!(integ,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)
+function resetStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax)
     reinit!(integ,erase_sol=true)
-    stochasticCisObservable[] .= integ.u[1:nMax]
-    stochasticCisObservable[] = stochasticCisObservable[]
-	stochasticMedObservable[] .= integ.u[1+nMax:2*nMax]
-    stochasticMedObservable[] = stochasticMedObservable[]
-	stochasticTraObservable[] .= integ.u[1+2*nMax:3*nMax]
-    stochasticTraObservable[] = stochasticTraObservable[]
+    cisObservable[] .= integ.u[1:nMax]
+    cisObservable[] = cisObservable[]
+	medObservable[] .= integ.u[1+nMax:2*nMax]
+    medObservable[] = medObservable[]
+	traObservable[] .= integ.u[1+2*nMax:3*nMax]
+    traObservable[] = traObservable[]
+    xlims!(axCis,(0.0,5.0))
+    xlims!(axMed,(0.0,5.0))
+    xlims!(axTra,(0.0,5.0))
 end
-
-ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
-
-
-# Set up figure canvas
-fig = Figure(resolution=(1700,1500),fontsize=32)
-axDiagram = Axis(fig[3,1:4],title="Model diagram",aspect=DataAspect())
-image!(axDiagram,rotr90(load(joinpath("_research","model.png"))))
-hidedecorations!(axDiagram)
-hidespines!(axDiagram)
-axCis = Axis(fig[1,1], aspect=0.55, ylabel = "Compartment size")
-xlims!(axCis,(0,3))
-axMed = Axis(fig[1,2], aspect=0.55, yticksvisible=false)
-xlims!(axMed,(0,3))
-axTra = Axis(fig[1,3], aspect=0.55, yticksvisible=false)
-xlims!(axTra,(0,3))
-Label(fig[1,1,Bottom()],"Cis",fontsize=32)
-Label(fig[1,2,Bottom()],"Medial",fontsize=32)
-Label(fig[1,3,Bottom()],"Trans",fontsize=32)
-
-# Set up parameter sliders
-parameterSliders = SliderGrid(
-    fig[1,4],
-    (label="k₁,  ∅ → c₁      " , range=0.0:0.01:1.2, startvalue=ksInit[1], format="{:.2f}"),
-    (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[2], format="{:.2f}"),
-    (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[3], format="{:.2f}"),
-    (label="k₄,  c₁ → m₁     " , range=0.0:0.01:1.2, startvalue=ksInit[4], format="{:.2f}"),
-    (label="k₅,  m₁ → c₁     " , range=0.0:0.01:1.2, startvalue=ksInit[5], format="{:.2f}"),
-    (label="k₆,  m₁+mₙ → mₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[6], format="{:.2f}"),
-    (label="k₇,  mₙ → m₁+mₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[7], format="{:.2f}"),
-    (label="k₈,  m₁ → t₁     " , range=0.0:0.01:1.2, startvalue=ksInit[8], format="{:.2f}"),
-    (label="k₉,  t₁ → m₁     " , range=0.0:0.01:1.2, startvalue=ksInit[9], format="{:.2f}"),
-    (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[10], format="{:.2f}"),
-    (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[11], format="{:.2f}"),
-    (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=ksInit[12], format="{:.2f}");
-)
-
-# Add stop/start button
-run = Button(fig[2,1]; label = "Start/Stop", tellwidth = false)
-reset = Button(fig[2,2]; label = "Reset", tellwidth = false)
-
-colsize!(fig.layout, 1, Relative(0.25))
-colsize!(fig.layout, 2, Relative(0.25))
-colsize!(fig.layout, 3, Relative(0.25))
-colsize!(fig.layout, 4, Relative(0.25))
-rowsize!(fig.layout, 1, Aspect(1, 2.0))
-rowsize!(fig.layout, 2, Aspect(1, 0.1))
-resize_to_layout!(fig)
 
 nMax    = 20             # Max compartment size
 tMax    = Inf
+ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 
 # Catalyst system setup
 # Symbolic system parameters: rate constants 
-@parameters k[1:12] t
+@parameters k[1:12]
+@variables t
 # Symbolic system variables: cis, medial, and trans compartment size counts 
-@variables C(t)[1:nMax] M(t)[1:nMax] T(t)[1:nMax] 
+@species C(t)[1:nMax] M(t)[1:nMax] T(t)[1:nMax] 
 # Use these parameters and variables to define a reaction system 
 # vector to store the Reactions
 system = allReactions(nMax,C,M,T,k,t)
@@ -144,10 +102,12 @@ p = Pair.(collect(k),ksInit)
 u₀Map = Pair.([collect(C); collect(M); collect(T)], zeros(Int32,3*nMax)) 
 
 # Create problem object
-discreteprob  = DiscreteProblem(system, u₀Map, (0.0,tMax), p)
-jumpProblem   = JumpProblem(system, discreteprob, Direct(), save_positions=(false,false)) # Converts system to a set of MassActionJumps
+discreteProblem  = [DiscreteProblem(system, u₀Map, (0.0,tMax), p)]
+jumpProblem   = [JumpProblem(system, discreteProblem[1], Direct(), save_positions=(false,false))] # Converts system to a set of MassActionJumps
 # Create integrator object
-integ = init(jumpProblem, SSAStepper())#, saveat=tMax/nOutput)
+integ = [init(jumpProblem[1], SSAStepper())]#, saveat=tMax/nOutput)
+
+fig, axCis, axMed, axTra, parameterSliders, run, reset = guiFigureSetup(ksInit)
 
 xLimTimeAv = [5.0]
 
@@ -156,9 +116,9 @@ stochasticCisObservable = Observable(zeros(Int32, nMax))
 stochasticMedObservable = Observable(zeros(Int32, nMax))
 stochasticTraObservable = Observable(zeros(Int32, nMax))
 # Initialise plots
-barplot!(axCis, collect(1:nMax), stochasticCisObservable, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=(:red,0.5))
-barplot!(axMed, collect(1:nMax), stochasticMedObservable, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=(:green,0.5))
-barplot!(axTra, collect(1:nMax), stochasticTraObservable, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=(:blue,0.5))
+barplot!(axCis, collect(1:nMax), stochasticCisObservable, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:red)
+barplot!(axMed, collect(1:nMax), stochasticMedObservable, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:green)
+barplot!(axTra, collect(1:nMax), stochasticTraObservable, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:blue)
 
 # Pull parameters from slider positions
 kObservables = [s.value for s in parameterSliders.sliders]
@@ -169,31 +129,34 @@ on(run.clicks) do clicks
     isrunning[] = !isrunning[]
 end
 on(reset.clicks) do clicks    
-    resetStep!(integ,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)
+    resetStep!(integ,axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)
     isrunning[] = false
 end
 
 on(run.clicks) do clicks
     @async while isrunning[]       
-        isopen(fig.scene) || break # ensures computations stop if closed window
-        # for i=1:12
-        #     p[i] = Pair(k[i],kObservables[i][])
-        # end 
-        # u₀Map .= Pair.([collect(C); collect(M); collect(T)], integ.u)
+        isopen(fig.scene) || break
+        # @unpack k = system
+        for i=1:12
+            p[i] = Pair(k[i],kObservables[i][])
+        end 
+        
+        u₀Map .= Pair.([collect(C); collect(M); collect(T)], integ[end].u) 
+        discreteProblem[1] = DiscreteProblem(system, u₀Map, (0.0,Inf), p)
+        jumpProblem[1] = remake(jumpProblem[1],prob=discreteProblem[end])
+        integ[1] = init(jumpProblem[end], SSAStepper())
+        # step!(integ[end])
+        
+        # push!(discreteProblem,DiscreteProblem(system, u₀Map, (0.0,Inf), p))
+        # push!(jumpProblem,remake(jumpProblem[1],prob=discreteProblem[end]))
+        # push!(integ,init(jumpProblem[end], SSAStepper()))
 
-        # discreteprob  = DiscreteProblem(system, u₀Map, (0.0,tMax), p)
-        # jumpProblem   = remake(jumpProblem, prob=discreteprob)
-        # # Create integrator object
-        # integ = init(jumpProblem, SSAStepper())#, saveat=tMax/nOutput)
-
-        animStep!(integ,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax,xLimTimeAv)
+        # push!(jumpProblem,remake(jumpProblem[end], u0 = integ[end].u, p = p, tspan = (0,Inf)))
+        # push!(integ,init(jumpProblem[end], SSAStepper()))
+        animStep!(integ[end],axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax,xLimTimeAv)        
+        
         sleep(0.1)
     end
 end
 
 display(fig)
-
-
-# v       = 4e-15          # m³ Typical cell volume 4000μm³ (https://bionumbers.hms.harvard.edu/bionumber.aspx?s=n&v=2&id=105906) = 4000e^-18 m³ = 4e-15m³
-# const L = 6.022140857e23 # mol⁻¹ Avogadro's number
-# Lv      = L*v

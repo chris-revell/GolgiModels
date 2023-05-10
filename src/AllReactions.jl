@@ -12,12 +12,6 @@ using Catalyst
 # Pass symbolic state vectors C, M, and T, and symbolic parameters k and t
 function allReactions(nMax,C,M,T,k,t)
 
-    # Symbolic system parameters: rate constants 
-    # @parameters k[1:12]
-    # Symbolic system variables: cis, medial, and trans compartment size counts 
-    # @variables t C(t)[1:nMax] M(t)[1:nMax] T(t)[1:nMax] 
-    # Use these parameters and variables to define a reaction system 
-
     # vector to store the Reactions
     reactions = []
     push!(reactions, Reaction(k[1], nothing, [C[1]]))            # ∅->c₁

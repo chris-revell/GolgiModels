@@ -37,12 +37,12 @@
 using DifferentialEquations
 using GLMakie
 using DrWatson
-using LinearAlgebra
+# using LinearAlgebra
 using UnPack
 using GeometryBasics
 using FileIO
 # using FastBroadcast
-using OrdinaryDiffEq
+# using OrdinaryDiffEq
 using Catalyst
 using FromFile
 using Format
@@ -50,17 +50,17 @@ using Format
 @from "$(projectdir("src","AllReactions.jl"))" using AllReactions
 @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
 # @from "$(projectdir("src","AnimStep.jl"))" using AnimStep
-@from "$(projectdir("src","ResetStep.jl"))" using ResetStep
+# @from "$(projectdir("src","ResetStep.jl"))" using ResetStep
 
 # Function to update figure based on system iteration
-function animStep!(integ,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax,xLimTimeAv)
+function animStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax,xLimTimeAv)
     step!(integ, 10.0)
-	deterministicCisObservable[] .= integ.u[1:nMax]
-    deterministicCisObservable[] = deterministicCisObservable[]
-	deterministicMedObservable[] .= integ.u[1+nMax:2*nMax]
-    deterministicMedObservable[] = deterministicMedObservable[]
-	deterministicTraObservable[] .= integ.u[1+2*nMax:3*nMax]
-    deterministicTraObservable[] = deterministicTraObservable[]
+	cisObservable[] .= integ.u[1:nMax]
+    cisObservable[] = cisObservable[]
+	medObservable[] .= integ.u[1+nMax:2*nMax]
+    medObservable[] = medObservable[]
+	traObservable[] .= integ.u[1+2*nMax:3*nMax]
+    traObservable[] = traObservable[]
     # Find time averaged maximum value to set xlim
     # if integ.t>100.0
         xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
@@ -72,22 +72,23 @@ function animStep!(integ,axCis,axMed,axTra,deterministicCisObservable,determinis
     # end
 end
 
-# # Function to reset figure
-function resetStep!(integ,axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)
+# Function to reset figure
+function resetStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax)
     reinit!(integ,erase_sol=true)
-    stochasticCisObservable[] .= integ.u[1:nMax]
-    stochasticCisObservable[] = stochasticCisObservable[]
-	stochasticMedObservable[] .= integ.u[1+nMax:2*nMax]
-    stochasticMedObservable[] = stochasticMedObservable[]
-	stochasticTraObservable[] .= integ.u[1+2*nMax:3*nMax]
-    stochasticTraObservable[] = stochasticTraObservable[]
-    xlims!(axCis,(0.0,3.0))
-    xlims!(axMed,(0.0,3.0))
-    xlims!(axTra,(0.0,3.0))
+    cisObservable[] .= integ.u[1:nMax]
+    cisObservable[] = cisObservable[]
+	medObservable[] .= integ.u[1+nMax:2*nMax]
+    medObservable[] = medObservable[]
+	traObservable[] .= integ.u[1+2*nMax:3*nMax]
+    traObservable[] = traObservable[]
+    xlims!(axCis,(0.0,5.0))
+    xlims!(axMed,(0.0,5.0))
+    xlims!(axTra,(0.0,5.0))
 end
 
 nMax    = 20             # Max compartment size
 tMax    = Inf
+ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 
 # Catalyst system setup
 # Symbolic system parameters: rate constants 
@@ -98,8 +99,6 @@ tMax    = Inf
 # Use these parameters and variables to define a reaction system 
 # vector to store the Reactions
 system = allReactions(nMax,C,M,T,k,t)
-
-ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 
 # Map symbolic paramters to values. Collect symbolic parameters into a vector.
 p = Pair.(collect(k),ksInit)
@@ -134,7 +133,6 @@ on(run.clicks) do clicks
 end
 on(reset.clicks) do clicks    
     resetStep!(integ,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
-    sleep(0.1)
     isrunning[] = false
 end
 
