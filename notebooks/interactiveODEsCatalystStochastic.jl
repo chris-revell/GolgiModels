@@ -49,8 +49,8 @@ using Format
 # @from "$(projectdir("src","ResetStep.jl"))" using ResetStep
 
 # Function to update figure based on system iteration
-function animStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax,xLimTimeAv)
-    step!(integ, 10.0)
+function animStep!(integ,dt,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax,xLimTimeAv)
+    step!(integ, dt, true)
 	cisObservable[] .= integ.u[1:nMax]
     cisObservable[] = cisObservable[]
 	medObservable[] .= integ.u[1+nMax:2*nMax]
@@ -83,8 +83,9 @@ function resetStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObser
 end
 
 nMax    = 20             # Max compartment size
+dt      = 100.0
 tMax    = Inf
-ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
+ksInit  = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 
 # Catalyst system setup
 # Symbolic system parameters: rate constants 
@@ -136,24 +137,15 @@ end
 on(run.clicks) do clicks
     @async while isrunning[]       
         isopen(fig.scene) || break
-        # @unpack k = system
+        
         for i=1:12
             p[i] = Pair(k[i],kObservables[i][])
         end 
-        
-        u₀Map .= Pair.([collect(C); collect(M); collect(T)], integ[end].u) 
+        u₀Map .= Pair.([collect(C); collect(M); collect(T)], integ[1].u) 
         discreteProblem[1] = DiscreteProblem(system, u₀Map, (0.0,Inf), p)
-        jumpProblem[1] = remake(jumpProblem[1],prob=discreteProblem[end])
-        integ[1] = init(jumpProblem[end], SSAStepper())
-        # step!(integ[end])
-        
-        # push!(discreteProblem,DiscreteProblem(system, u₀Map, (0.0,Inf), p))
-        # push!(jumpProblem,remake(jumpProblem[1],prob=discreteProblem[end]))
-        # push!(integ,init(jumpProblem[end], SSAStepper()))
-
-        # push!(jumpProblem,remake(jumpProblem[end], u0 = integ[end].u, p = p, tspan = (0,Inf)))
-        # push!(integ,init(jumpProblem[end], SSAStepper()))
-        animStep!(integ[end],axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax,xLimTimeAv)        
+        jumpProblem[1] = remake(jumpProblem[1],prob=discreteProblem[1])
+        integ[1] = init(jumpProblem[1], SSAStepper())
+        animStep!(integ[1],axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax,xLimTimeAv)        
         
         sleep(0.1)
     end

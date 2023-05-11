@@ -49,12 +49,10 @@ using Format
 
 @from "$(projectdir("src","AllReactions.jl"))" using AllReactions
 @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
-# @from "$(projectdir("src","AnimStep.jl"))" using AnimStep
-# @from "$(projectdir("src","ResetStep.jl"))" using ResetStep
 
 # Function to update figure based on system iteration
-function animStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax,xLimTimeAv)
-    step!(integ, 10.0)
+function animStep!(integ,dt,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax,xLimTimeAv)
+    step!(integ, dt, true)
 	cisObservable[] .= integ.u[1:nMax]
     cisObservable[] = cisObservable[]
 	medObservable[] .= integ.u[1+nMax:2*nMax]
@@ -62,14 +60,10 @@ function animStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObserv
 	traObservable[] .= integ.u[1+2*nMax:3*nMax]
     traObservable[] = traObservable[]
     # Find time averaged maximum value to set xlim
-    # if integ.t>100.0
-        xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
-        xlims!(axCis,(0.0,1.1*xLimTimeAv[1]))
-        xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
-        xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))
-    # else
-    #     xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
-    # end
+    xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
+    xlims!(axCis,(0.0,1.1*xLimTimeAv[1]))
+    xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
+    xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))
 end
 
 # Function to reset figure
@@ -88,7 +82,8 @@ end
 
 nMax    = 20             # Max compartment size
 tMax    = Inf
-ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
+dt      = 100.0
+ksInit  = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 
 # Catalyst system setup
 # Symbolic system parameters: rate constants 
@@ -143,7 +138,7 @@ on(run.clicks) do clicks
             integ.p[i] = kObservables[i][]
         end        
         animStep!(integ,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax,xLimTimeAv)
-        # axCis.title="t=$(format(integ.t, precision=1))"
+        axCis.title="t=$(format(integ.t, precision=1))"
         sleep(0.1)
     end
 end
