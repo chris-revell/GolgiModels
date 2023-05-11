@@ -62,7 +62,7 @@ function animStep!(integ,dt,axCis,axMed,axTra,cisObservable,medObservable,traObs
 end
 
 # Function to reset figure
-function resetStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax)
+function resetStepODE!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax)
     reinit!(integ,erase_sol=true)
     cisObservable[] .= integ.u[1:nMax]
     cisObservable[] = cisObservable[]
@@ -73,6 +73,23 @@ function resetStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObser
     xlims!(axCis,(0.0,5.0))
     xlims!(axMed,(0.0,5.0))
     xlims!(axTra,(0.0,5.0))
+end
+
+function resetStepStoch!(pStoch,u₀MapStoch,nMax,discreteProblem,tMax,jumpProblem,integStoch,cisObservable,medObservable,traObservable)
+    pStoch .= Pair.(collect(k),ksInit)
+    # Map symbolic state vector to vector of values. Collect symbolic state variables into a single vector.
+    u₀MapStoch .= Pair.([collect(C); collect(M); collect(T)], zeros(Int32,3*nMax)) 
+    # Create problem object
+    discreteProblem  .= [DiscreteProblem(system, u₀MapStoch, (0.0,tMax), pStoch)]
+    jumpProblem   .= [JumpProblem(system, discreteProblem[1], Direct(), save_positions=(false,false))] # Converts system to a set of MassActionJumps
+    # Create integrator object
+    integStoch .= [init(jumpProblem[1], SSAStepper())]
+    cisObservable[] .= integStoch[1].u[1:nMax]
+    cisObservable[] = cisObservable[]
+	medObservable[] .= integStoch[1].u[1+nMax:2*nMax]
+    medObservable[] = medObservable[]
+	traObservable[] .= integStoch[1].u[1+2*nMax:3*nMax]
+    traObservable[] = traObservable[]
 end
 
 nMax    = 20             # Max compartment size
@@ -142,7 +159,8 @@ on(run.clicks) do clicks
     isrunning[] = !isrunning[]
 end
 on(reset.clicks) do clicks    
-    resetStep!(integODE,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+    resetStepODE!(integODE,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+    resetStepStoch!(pStoch,u₀MapStoch,nMax,discreteProblem,tMax,jumpProblem,integStoch,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable)
     isrunning[] = false
 end
 

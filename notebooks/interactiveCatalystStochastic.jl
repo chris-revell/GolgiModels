@@ -142,11 +142,10 @@ on(run.clicks) do clicks
             p[i] = Pair(k[i],kObservables[i][])
         end 
         u₀Map .= Pair.([collect(C); collect(M); collect(T)], integ[1].u) 
-        discreteProblem[1] = DiscreteProblem(system, u₀Map, (0.0,Inf), p)
+        discreteProblem[1] = DiscreteProblem(system, u₀Map, (integ[1].t,Inf), p)
         jumpProblem[1] = remake(jumpProblem[1],prob=discreteProblem[1])
         integ[1] = init(jumpProblem[1], SSAStepper())
-        animStep!(integ[1],axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax,xLimTimeAv)        
-        
+        animStep!(integ[1],axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax,xLimTimeAv)
         sleep(0.1)
     end
 end
