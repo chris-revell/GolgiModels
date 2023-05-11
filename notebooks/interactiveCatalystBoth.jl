@@ -153,7 +153,7 @@ on(run.clicks) do clicks
         for i=1:12
             integODE.p[i] = kObservables[i][]
         end        
-        animStep!(integODE,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+        animStep!(integODE,dt,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
         axCis.title="t=$(format(integODE.t, precision=1))"
         
         for i=1:12
@@ -163,7 +163,7 @@ on(run.clicks) do clicks
         discreteProblem[1] = DiscreteProblem(system, u₀MapStoch, (integStoch[1].t,Inf), pStoch)
         jumpProblem[1] = remake(jumpProblem[1],prob=discreteProblem[1])
         integStoch[1] = init(jumpProblem[end], SSAStepper())
-        animStep!(integStoch[1],axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)        
+        animStep!(integStoch[1],dt,axCis,axMed,axTra,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,nMax)        
 
         # Find time averaged maximum value to set xlim
         xLimTimeAv[1] = (xLimTimeAv[1]*19+max(maximum(integStoch[1].u),maximum(integODE.u)))/20
