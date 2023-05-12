@@ -8,13 +8,14 @@ module GuiFigureSetup
 
 using GLMakie
 using FileIO
+using DrWatson
 
 # Function to setup figure
 function guiFigureSetup(ksInit)
     # Set up figure canvas
     fig = Figure(resolution=(1700,1500),fontsize=32)
     axDiagram = Axis(fig[3,1:4],title="Model diagram",aspect=DataAspect())
-    image!(axDiagram,rotr90(load(joinpath("_research","model.png"))))
+    image!(axDiagram,rotr90(load(projectdir("_research","model.png"))))
     hidedecorations!(axDiagram)
     hidespines!(axDiagram)
     axCis = Axis(fig[1,1], aspect=0.55, ylabel = "Compartment size")

@@ -190,7 +190,7 @@ on(run.clicks) do clicks
         xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))
 
         axCis.title="t=$(format(integODE.t, precision=1))"
-        axMed.title="t=$(format(integStoch[1].t, precision=1))"
+        # axMed.title="t=$(format(integStoch[1].t, precision=1))"
 
         sleep(0.1)
     end
