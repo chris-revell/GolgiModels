@@ -17,16 +17,6 @@ function animStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObserv
     medObservable[] = medObservable[]
 	traObservable[] .= integ.u[1+2*nMax:3*nMax]
     traObservable[] = traObservable[]
-    # Find time averaged maximum value to set xlim
-    # if integ.t>100.0
-        xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
-        xlims!(axCis,(0.0,1.1*xLimTimeAv[1]))
-        xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
-        xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))
-    # else
-    #     xLimTimeAv[1] = (xLimTimeAv[1]*19+maximum(integ.u))/20
-    # end
-    
 end
 
 export animStep!
