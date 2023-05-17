@@ -194,6 +194,13 @@ on(run.clicks) do clicks
         xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
         xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))
 
+        stochTimeAvCisObservable[] .= (stochTimeAvCisObservable[].*19.0.+integStoch[1].u[1:nMax])./20.0
+        stochTimeAvCisObservable[] = stochTimeAvCisObservable[]
+        stochTimeAvMedObservable[] .= (stochTimeAvMedObservable[].*19.0.+integStoch[1].u[1+nMax:2*nMax])./20.0
+        stochTimeAvMedObservable[] = stochTimeAvMedObservable[]
+        stochTimeAvTraObservable[] .= (stochTimeAvTraObservable[].*19.0.+integStoch[1].u[1+2*nMax:3*nMax])./20.0
+        stochTimeAvTraObservable[] = stochTimeAvTraObservable[]
+
         axCis.title="t=$(format(integODE.t, precision=1))"
         # axMed.title="t=$(format(integStoch[1].t, precision=1))"
 
