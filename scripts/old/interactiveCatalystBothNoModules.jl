@@ -46,7 +46,7 @@ function guiFigureSetup(ksInit)
     # Set up figure canvas
     fig = Figure(resolution=(1700,1500),fontsize=32)
     axDiagram = Axis(fig[3,1:4],title="Model diagram",aspect=DataAspect())
-    image!(axDiagram,rotr90(load("_research\\model.png")))
+    image!(axDiagram,rotr90(load("supplementary\\model.png")))
     hidedecorations!(axDiagram)
     hidespines!(axDiagram)
     axCis = Axis(fig[1,1], aspect=0.55, ylabel = "Compartment size")

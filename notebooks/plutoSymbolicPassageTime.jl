@@ -21,7 +21,7 @@ using Catalyst
 md"# Model"
 
 # ╔═╡ d065aa68-af39-4f2a-bda8-5faa80ef240f
-load("$(homedir())/Postdoc/Code/GolgiModels/_research/GolgiCompartmentModel_reduced.png")
+load("$(homedir())/Postdoc/Code/GolgiModels/supplementary/GolgiCompartmentModel_reduced.png")
 
 # ╔═╡ f0e16d72-7199-459d-ad57-6f7868240446
 md"# Rates"
@@ -99,12 +99,24 @@ K₇⁻¹ = simplify.(inv(Matrix(K₇)))
 # ╔═╡ 4ef1ffa3-d51f-450a-892b-f48a2761667f
 τ₇ = sum(K₇⁻¹[:,1])
 
+# ╔═╡ 4eb29316-cdbf-48cc-8ad6-125009cff8d7
+test = Symbolics.toexpr(τ₇)
+
+# ╔═╡ d02a4fa5-19d8-4b8c-84ad-fb574e02fa0c
+test(1)
+
+# ╔═╡ 01c47f8f-187c-4d6e-8cc6-c00e3263bcb2
+f_expr = build_function(τ₇)
+
 # ╔═╡ d03a91d7-37e7-4995-8b57-2396c1663058
 md"# Residence times
 
 Residence times in compartment n given by inverse of effective rates of reactions into or out of compartment n. 
 
 In steady state we can ignore rates into and out of side branches within each maturation state."
+
+# ╔═╡ b6fe851e-b3cd-44e8-868d-e2dbd33b3d9e
+K₇⁻¹[3,1]
 
 # ╔═╡ 2711d49b-de64-4e3a-af1b-2e07223c4f28
 md" # Catalyst"
@@ -135,6 +147,18 @@ savegraph(grph,"grph.png")
 # ╔═╡ ba133c4c-4b7f-48ac-a1e0-29c23cdfcdaf
 Base.Filesystem.pwd()
 
+# ╔═╡ 60ba2bba-9aa7-4e0b-9642-30f2e38151cd
+md"# k hats"
+
+# ╔═╡ 46f89cf1-1699-4257-aa02-2a947c73e3aa
+@variables k₃ k₇ k₁₁
+
+# ╔═╡ 5ce08fc3-3131-43e5-9339-39d59a77f6ca
+∑(v) = +(v...)
+
+# ╔═╡ 8c4b93cf-ac49-412a-8618-39ed02657b54
+
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -158,7 +182,7 @@ Symbolics = "~5.3.1"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0"
+julia_version = "1.9.1"
 manifest_format = "2.0"
 project_hash = "6cabed7340d603a8c886d72fa386f3230d2c72d8"
 
@@ -738,7 +762,7 @@ uuid = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
 version = "1.2.1"
 
 [[deps.ImageMagick_jll]]
-deps = ["Artifacts", "Ghostscript_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pkg", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Ghostscript_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "OpenJpeg_jll", "Pkg", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "124626988534986113cfd876e3093e4a03890f58"
 uuid = "c73af94c-d91f-53ed-93a7-00f77d67a9d7"
 version = "6.9.12+3"
@@ -986,6 +1010,12 @@ version = "7.2.0"
 deps = ["Libdl", "OpenBLAS_jll", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
+[[deps.LittleCMS_jll]]
+deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pkg"]
+git-tree-sha1 = "110897e7db2d6836be22c18bffd9422218ee6284"
+uuid = "d3a379c0-f9a3-5b72-a4c0-6bf4d2e8af0f"
+version = "2.12.0+0"
+
 [[deps.LogExpFunctions]]
 deps = ["DocStringExtensions", "IrrationalConstants", "LinearAlgebra"]
 git-tree-sha1 = "0a1b7c2863e44523180fdb3146534e265a91870b"
@@ -1151,6 +1181,12 @@ deps = ["Artifacts", "Imath_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
 git-tree-sha1 = "a4ca623df1ae99d09bc9868b008262d0c0ac1e4f"
 uuid = "18a262bb-aa17-5467-a713-aee519bc75cb"
 version = "3.1.4+0"
+
+[[deps.OpenJpeg_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Libtiff_jll", "LittleCMS_jll", "Pkg", "libpng_jll"]
+git-tree-sha1 = "76374b6e7f632c130e78100b166e5a48464256f8"
+uuid = "643b3616-a352-519d-856d-80112ee9badc"
+version = "2.4.0+0"
 
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -1725,7 +1761,7 @@ version = "0.2.3"
 [[deps.libblastrampoline_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.7.0+0"
+version = "5.8.0+0"
 
 [[deps.libpng_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Zlib_jll"]
@@ -1768,7 +1804,11 @@ version = "17.4.0+0"
 # ╠═5f7c2ebe-5939-4310-8dc9-b000b4ca2147
 # ╠═23dad34e-1cc3-4382-8570-c8b6a966c176
 # ╠═4ef1ffa3-d51f-450a-892b-f48a2761667f
+# ╠═4eb29316-cdbf-48cc-8ad6-125009cff8d7
+# ╠═d02a4fa5-19d8-4b8c-84ad-fb574e02fa0c
+# ╠═01c47f8f-187c-4d6e-8cc6-c00e3263bcb2
 # ╠═d03a91d7-37e7-4995-8b57-2396c1663058
+# ╠═b6fe851e-b3cd-44e8-868d-e2dbd33b3d9e
 # ╠═2711d49b-de64-4e3a-af1b-2e07223c4f28
 # ╠═41c8dab3-a312-4ff3-be9d-5f8472c58279
 # ╠═3bb2aafb-1ba5-4ff1-8d67-a16ea047c779
@@ -1777,5 +1817,9 @@ version = "17.4.0+0"
 # ╠═4076f80f-fcdb-4150-bd2a-cabea2cb7d27
 # ╠═946e7877-f487-4d42-b48b-97247fd5cfe2
 # ╠═ba133c4c-4b7f-48ac-a1e0-29c23cdfcdaf
+# ╠═60ba2bba-9aa7-4e0b-9642-30f2e38151cd
+# ╠═46f89cf1-1699-4257-aa02-2a947c73e3aa
+# ╠═5ce08fc3-3131-43e5-9339-39d59a77f6ca
+# ╠═8c4b93cf-ac49-412a-8618-39ed02657b54
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
