@@ -47,7 +47,7 @@ function allReactions(nMax,C,M,T,k,t)
     end
     push!(reactions, Reaction(k[12], [T[1]], nothing))           # t₁->∅
     # Set up reaction system object. Collect symbolic state variables into a single vector.
-    @named system = ReactionSystem(reactions, t, [collect(C); collect(M); collect(T)], k, combinatoric_ratelaws=false)
+    @named system = ReactionSystem(reactions, t, [collect(C); collect(M); collect(T)], k, combinatoric_ratelaws=true)
     
     return system
 

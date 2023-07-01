@@ -116,7 +116,7 @@ Residence times in compartment n given by inverse of effective rates of reaction
 In steady state we can ignore rates into and out of side branches within each maturation state."
 
 # ╔═╡ b6fe851e-b3cd-44e8-868d-e2dbd33b3d9e
-K₇⁻¹[3,1]
+simplify(-K₇⁻¹[7,1])
 
 # ╔═╡ 2711d49b-de64-4e3a-af1b-2e07223c4f28
 md" # Catalyst"
