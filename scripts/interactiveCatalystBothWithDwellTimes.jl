@@ -35,7 +35,8 @@
 
 # using DynamicalSystems
 using DifferentialEquations
-using GLMakie
+# using GLMakie
+using WGLMakie; WGLMakie.activate!()
 using DrWatson
 using UnPack
 using GeometryBasics
@@ -137,22 +138,24 @@ integStoch = [init(jumpProblem[1], SSAStepper())]#, saveat=tMax/nOutput)
 
 
 # Set up figure canvas
-fig = Figure(resolution=(1500,1500),fontsize=32)
+fig = Figure(resolution=(2000,1500),fontsize=32)
 
 grd1 = GridLayout(fig[1,1])
 grd2 = GridLayout(fig[2,1])
 grd3 = GridLayout(fig[3,1])
 
-axDiagram = Axis(grd1[1,1:3],title="Model diagram",aspect=DataAspect())
+axDiagram = Axis(grd1[1,1],title="Model diagram",aspect=DataAspect())
 image!(axDiagram,rotr90(load(projectdir("supplementary","GolgiCompartmentModel.png"))))
 hidedecorations!(axDiagram)
 hidespines!(axDiagram)
 
-axCis = Axis(grd2[1,1], ylabel = "Compartment size")#, aspect=0.3)
+axCis = Axis(grd2[1,1], ylabel = "Compartment size")
 xlims!(axCis,(0,3))
-axMed = Axis(grd2[1,2], yticksvisible=false)#, aspect=0.3)
+tObservable = Observable(0.0)
+axCis.title="t=$(format(tObservable[],precision=1))"
+axMed = Axis(grd2[1,2], yticksvisible=false)
 xlims!(axMed,(0,3))
-axTra = Axis(grd2[1,3], yticksvisible=false)#, aspect=0.3)
+axTra = Axis(grd2[1,3], yticksvisible=false)
 xlims!(axTra,(0,3))
 
 axDwell = Axis(grd3[1:2,4],title = "Dwell Times")
@@ -171,7 +174,7 @@ Label(grd2[1,3,Bottom()],"Trans",fontsize=32)
 
 # Set up parameter sliders
 parameterSliders = SliderGrid(
-    grd1[1,4],
+    grd1[1,2],
     (label="k₁,  ∅ → c₁      " , range=0.0:0.01:1.2, startvalue=ksInit[1], format="{:.2f}"),
     (label="k₂,  c₁+cₙ → cₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[2], format="{:.2f}"),
     (label="k₃,  cₙ → c₁+cₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[3], format="{:.2f}"),
@@ -183,21 +186,17 @@ parameterSliders = SliderGrid(
     (label="k₉,  t₁ → m₁     " , range=0.0:0.01:1.2, startvalue=ksInit[9], format="{:.2f}"),
     (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:1.2, startvalue=ksInit[10], format="{:.2f}"),
     (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[11], format="{:.2f}"),
-    (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=ksInit[12], format="{:.2f}");
+    (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=ksInit[12], format="{:.2f}"),
+    width = 700,
+    # tellheight = false
 )
 
 # Add stop/start button
 run = Button(grd3[2,1]; label = "Start/Stop", tellwidth = false)
 reset = Button(grd3[2,2]; label = "Reset", tellwidth = false)
 
-# colsize!(grd2, 1, Relative(0.3))
-# colsize!(grd2, 2, Relative(0.3))
-# colsize!(grd2, 3, Relative(0.3))
-# colsize!(fig.layout, 4, Relative(0.4))
-# rowsize!(fig.layout, 1, Relative(0.2))
-# rowsize!(fig.layout, 2, Relative(0.5))
-# rowsize!(fig.layout, 3, Relative(0.2))
-colsize!(grd1, 4, Aspect(1, 1.0))
+rowsize!(fig.layout,2,Relative(0.25))
+rowsize!(fig.layout,3,Relative(0.25))
 resize_to_layout!(fig)
 
 xLimTimeAv = [5.0]
@@ -247,21 +246,10 @@ end
 
 dwellTimesValues = zeros(7)
 
-toggles = Toggle(grd3[2,3], active = false)
-labels = Label(grd3[2,3,Right()],"Linear/Nonlinear")
-linearity = [true]
-pastlinearity = [true]
-connect!(linearity[1], toggles[1].active)
-
 on(run.clicks) do clicks
     @async while isrunning[]
     # while isrunning[]
         isopen(fig.scene) || break # ensures computations stop if closed window
-
-
-        if linearity!=pastlinearity
-            reset odes
-
         
         for i=1:12
             integODE.p[i] = kObservables[i][]
@@ -270,14 +258,15 @@ on(run.clicks) do clicks
         
         hattedConstants!(integODE.p,k̂,integODE.u,nMax)
         
+        tObservable[] = integODE.t
+        tObservable[]=tObservable[]
+
         for i=1:7
             dwellTimesValues[i] = -dwellTimesFuns[i](k̂)
         end
         dwellTimeObservable[] .= dwellTimesValues
         dwellTimeObservable[] = dwellTimeObservable[]
         ylims!(axDwell,(0,maximum(dwellTimesValues)))
-
-        axCis.title="t=$(format(integODE.t, precision=1))"
         
         for i=1:12
             pStoch[i] = Pair(k[i],kObservables[i][])
