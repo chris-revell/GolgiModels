@@ -196,8 +196,8 @@ parameterSliders = SliderGrid(
 )
 
 # Add stop/start button
-run = Button(grd3[2,1]; label = "Start/Stop", tellwidth = false)
-reset = Button(grd3[2,2]; label = "Reset", tellwidth = false)
+run = Makie.Button(grd3[2,1]; label = "Start/Stop", tellwidth = false)
+reset = Makie.Button(grd3[2,2]; label = "Reset", tellwidth = false)
 
 rowsize!(fig.layout,2,Relative(0.25))
 rowsize!(fig.layout,3,Relative(0.25))
