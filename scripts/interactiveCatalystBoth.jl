@@ -44,6 +44,8 @@ using Catalyst
 using FromFile
 using Format
 
+GLMakie.activate!()
+
 @from "$(projectdir("src","AllReactions.jl"))" using AllReactions
 @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
 
@@ -89,10 +91,13 @@ function resetStepStoch!(pStoch,u₀MapStoch,nMax,discreteProblem,tMax,jumpProbl
     traObservable[] = traObservable[]
 end
 
-nMax    = 20             # Max compartment size
-dt      = 100.0
-tMax    = Inf
-ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
+nMax          = 20             # Max compartment size
+dt            = 100.0
+tMax          = Inf
+ksInit        = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
+V             = 10 #μm³
+kStochFactors = [V, 1/V, 1.0, 1.0, 1.0, 1/V, 1.0, 1.0, 1.0, 1/V, 1.0, 1.0]
+
 
 # Catalyst system setup
 # Symbolic system parameters: rate constants 
@@ -174,10 +179,18 @@ on(run.clicks) do clicks
         isopen(fig.scene) || break # ensures computations stop if closed window
         
         for i=1:12
-            integODE.p[i] = kObservables[i][]
+            integODE.p[i] = kStochFactors[i]*kObservables[i][]
         end        
         animStep!(integODE,dt,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
+        deterministicCisObservable[] .= deterministicCisObservable[].*V
+        deterministicCisObservable[] = deterministicCisObservable[]
+        deterministicMedObservable[] .= deterministicMedObservable[].*V
+        deterministicMedObservable[] = deterministicMedObservable[]
+        deterministicTraObservable[] .= deterministicTraObservable[].*V
+        deterministicTraObservable[] = deterministicTraObservable[]
         axCis.title="t=$(format(integODE.t, precision=1))"
+        axCis.title="t=$(format(integODE.t, precision=1))"
+
         
         for i=1:12
             pStoch[i] = Pair(k[i],kObservables[i][])
