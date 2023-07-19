@@ -35,7 +35,7 @@
 
 # using DynamicalSystems
 using DifferentialEquations
-using GLMakie
+using Makie
 using WGLMakie; WGLMakie.activate!()
 using DrWatson
 using UnPack
