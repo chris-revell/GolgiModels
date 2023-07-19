@@ -44,6 +44,10 @@ using FileIO
 using Catalyst
 using FromFile
 using Format
+using JSServe
+
+# TODO: handle this by environment variables instead
+JSServe.configure_server!(listen_port=9384, listen_url="0.0.0.0")
 
 @from "$(projectdir("src","AllReactions.jl"))" using AllReactions
 # @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
