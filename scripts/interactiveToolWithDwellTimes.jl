@@ -35,7 +35,7 @@
 
 # using DynamicalSystems
 using DifferentialEquations
-using GLMakie
+using Makie
 using WGLMakie; WGLMakie.activate!()
 using DrWatson
 using UnPack
@@ -44,6 +44,10 @@ using FileIO
 using Catalyst
 using FromFile
 using Format
+using JSServe
+
+# TODO: handle this by environment variables instead
+JSServe.configure_server!(listen_port=9384, listen_url="0.0.0.0")
 
 @from "$(projectdir("src","AllReactions.jl"))" using AllReactions
 # @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
@@ -192,8 +196,8 @@ parameterSliders = SliderGrid(
 )
 
 # Add stop/start button
-run = Button(grd3[2,1]; label = "Start/Stop", tellwidth = false)
-reset = Button(grd3[2,2]; label = "Reset", tellwidth = false)
+run = Makie.Button(grd3[2,1]; label = "Start/Stop", tellwidth = false)
+reset = Makie.Button(grd3[2,2]; label = "Reset", tellwidth = false)
 
 rowsize!(fig.layout,2,Relative(0.25))
 rowsize!(fig.layout,3,Relative(0.25))
