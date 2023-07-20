@@ -17,4 +17,4 @@ COPY supplementary ./supplementary
 
 # TODO: run the script and create a sysimage to speed up load time of the container
 
-CMD julia --trace-compile=stderr --project=. -i -e 'include("scripts/interactiveToolWithDwellTimes.jl")'
+CMD julia --project=. -i -e 'include("scripts/interactiveToolWithDwellTimes.jl")'
