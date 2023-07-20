@@ -3,13 +3,13 @@
 
 To use with Docker, from the cloned repository directory,
 ```
-docker build -t GolgiModels:latest .
+docker build -t golgimodels:latest .
 ```
 This may take about 15 minutes.
 
 To run,
 ```
-docker run -it --rm -p 9384:9384 GolgiModels:latest
+docker run -it --rm -p 9384:9384 golgimodels:latest
 ```
 
 It may take about 5 minutes before you get the `julia>` prompt,
