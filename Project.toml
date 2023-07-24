@@ -1,3 +1,8 @@
+name = "GolgiModels"
+uuid = "0ff62a18-b0ee-4148-8bd7-9542b8838cb1"
+authors = ["Christopher Revell <christopher.revell@manchester.ac.uk>"]
+version = "0.1.0"
+
 [deps]
 Catalyst = "479239e8-5488-4da2-87a7-35f2df7eef83"
 DifferentialEquations = "0c46a032-eb83-5123-abaf-570d42b7fbaa"
@@ -8,10 +13,11 @@ FromFile = "ff7dd447-1dcb-4ce3-b8ac-22a812192de7"
 GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 JSServe = "824d6782-a2ef-11e9-3a09-e5662e0c26f9"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 OrdinaryDiffEq = "1dea7af3-3e70-54e6-95c3-0bf5283fa5ed"
-SimpleContainerGenerator = "b8d349fb-717b-4aac-a9b1-e1da4219c631"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 WGLMakie = "276b4fcb-3e11-5398-bf8b-a0c2d153d008"
-XLSX = "fdbf4ff8-1666-58a4-91e7-1b58723a45e0"

@@ -4,9 +4,9 @@
 #
 #  Created by Christopher Revell on 28/04/2023.
 
-module AllReactions
+# module AllReactions
 
-using Catalyst
+# using Catalyst
 
 # Find all possible reactions pairs that result in oligomers with size <= nMax
 # Pass symbolic state vectors C, M, and T, and symbolic parameters k and t
@@ -53,6 +53,6 @@ function allReactions(nMax,C,M,T,k,t)
 
 end
 
-export allReactions
+# export allReactions
 
-end
+# end

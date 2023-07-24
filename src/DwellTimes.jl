@@ -4,7 +4,7 @@
 #
 #  Created by Christopher Revell on 22/05/2023.
 
-module DwellTimes
+# module DwellTimes
 
 using Symbolics
 using LinearAlgebra
@@ -34,6 +34,6 @@ dwellTimesExpr = build_function.(K₇⁻¹[:,1], fill([k₁, k̂₂, k̂₃, k�
 # Base.remove_linenums!.(f_expr)
 dwellTimesFuns = eval.(dwellTimesExpr)
 
-export dwellTimesFuns
+# export dwellTimesFuns
 
-end
+# end

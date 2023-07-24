@@ -4,13 +4,11 @@
 #
 #  Created by Christopher Revell on 28/04/2023.
 
-module AnimStep
-
-using GLMakie
+# module AnimStep
 
 # Function to update figure based on system iteration
-function animStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax,xLimTimeAv)
-    step!(integ, 10.0)
+function animStep!(integ,dt,axCis,axMed,axTra,cisObservable,medObservable,traObservable,nMax)
+    step!(integ, dt, true)
 	cisObservable[] .= integ.u[1:nMax]
     cisObservable[] = cisObservable[]
 	medObservable[] .= integ.u[1+nMax:2*nMax]
@@ -19,6 +17,6 @@ function animStep!(integ,axCis,axMed,axTra,cisObservable,medObservable,traObserv
     traObservable[] = traObservable[]
 end
 
-export animStep!
+# export animStep!
 
-end
+# end

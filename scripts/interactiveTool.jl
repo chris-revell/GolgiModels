@@ -91,11 +91,11 @@ function resetStepStoch!(pStoch,u₀MapStoch,nMax,discreteProblem,tMax,jumpProbl
     traObservable[] = traObservable[]
 end
 
-nMax          = 20             # Max compartment size
-dt            = 100.0
-tMax          = Inf
-ksInit        = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
-V             = 10 #μm³
+nMax          = 20             # Max compartment size /vesicles
+dt            = 100.0          # Integration time interval /seconds
+tMax          = Inf             
+ksInit        = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0] # Initial rate constants / mol l⁻¹s⁻¹
+V             = 10 # μm³
 kStochFactors = [V, 1/V, 1.0, 1.0, 1.0, 1/V, 1.0, 1.0, 1.0, 1/V, 1.0, 1.0]
 
 
@@ -179,7 +179,7 @@ on(run.clicks) do clicks
         isopen(fig.scene) || break # ensures computations stop if closed window
         
         for i=1:12
-            integODE.p[i] = kStochFactors[i]*kObservables[i][]
+            integODE.p[i] = kObservables[i][]
         end        
         animStep!(integODE,dt,axCis,axMed,axTra,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,nMax)
         deterministicCisObservable[] .= deterministicCisObservable[].*V
@@ -193,7 +193,7 @@ on(run.clicks) do clicks
 
         
         for i=1:12
-            pStoch[i] = Pair(k[i],kObservables[i][])
+            pStoch[i] = Pair(k[i],kStochFactors[i]*kObservables[i][])
         end 
         u₀MapStoch .= Pair.([collect(C); collect(M); collect(T)], integStoch[1].u) 
         discreteProblem[1] = DiscreteProblem(system, u₀MapStoch, (integStoch[1].t,Inf), pStoch)

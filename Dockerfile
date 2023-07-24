@@ -1,20 +1,18 @@
 FROM julia:1.9.2-bullseye
 
-WORKDIR /app
+WORKDIR /app/GolgiModels
 
 EXPOSE 9384
 
 # Copy files
-COPY Project.toml .
-
-# Install deps
-RUN julia --project=. -e "import Pkg; Pkg.instantiate(); Pkg.precompile()"
-
-# Run apps
+COPY Project.toml ./
 COPY scripts ./scripts
 COPY src ./src
 COPY supplementary ./supplementary
 
-# TODO: run the script and create a sysimage to speed up load time of the container
+# Run on container build: Install deps
+RUN julia -e 'using Pkg; Pkg.develop(path="./")'
+RUN julia --project=. -e "import Pkg; Pkg.instantiate(); using GolgiModels"
 
-CMD julia --project=. -i -e 'include("scripts/interactiveToolWithDwellTimes.jl")'
+# Run on container startup
+CMD julia --project=. -i -e "using GolgiModels; golgiApp()"
