@@ -6,9 +6,9 @@ EXPOSE 9384
 
 # Copy files
 COPY Project.toml ./
-COPY scripts ./scripts
 COPY src ./src
-COPY supplementary ./supplementary
+COPY supplementary/GolgiCompartmentModel_reduced.png ./supplementary/
+COPY supplementary/GolgiCompartmentModel.png ./supplementary/
 
 # Run on container build: Install deps
 RUN julia -e 'using Pkg; Pkg.develop(path="./")'
