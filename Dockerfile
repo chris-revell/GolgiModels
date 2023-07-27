@@ -12,7 +12,7 @@ COPY supplementary/GolgiCompartmentModel.png ./supplementary/
 
 # Run on container build: Install deps
 RUN julia -e 'using Pkg; Pkg.develop(path="./")'
-RUN julia --project=. -i -e "using Pkg; Pkg.instantiate(); using GolgiModels; golgiApp()"
+RUN julia --project=. -i -e "using Pkg; Pkg.instantiate(); using GolgiModels"
 
 # Run on container startup
 CMD julia --project=. -i -e "using GolgiModels; golgiApp()"
