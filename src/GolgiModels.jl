@@ -149,7 +149,6 @@ module GolgiModels
             (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:1.2, startvalue=ksInit[11], format="{:.2f}"),
             (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:1.2, startvalue=ksInit[12], format="{:.2f}"),
             width = 700,
-            # tellheight = false
         )
 
         # Add stop/start button
@@ -266,8 +265,6 @@ module GolgiModels
     @compile_workload begin
         golgiApp(displayFlag=false)
     end
-    # nothing
-    # end
 
 export golgiApp
 
