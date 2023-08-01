@@ -48,12 +48,12 @@ module GolgiModels
     using Format
     using JSServe  
 
-    # quickactivate(".")
-    include(projectdir("src", "AllReactions.jl"))
-    include(projectdir("src", "DwellTimes.jl"))
-    include(projectdir("src", "AnimStep.jl"))
-    include(projectdir("src", "ResetStep.jl"))
-    include(projectdir("src", "HattedConstants.jl"))
+    quickactivate("GolgiModels")
+    include(srcdir("AllReactions.jl"))
+    include(srcdir("DwellTimes.jl"))
+    include(srcdir("AnimStep.jl"))
+    include(srcdir("ResetStep.jl"))
+    include(srcdir("HattedConstants.jl"))
 
     function golgiApp(;displayFlag=true)
 
