@@ -33,7 +33,7 @@ function refreshStoch!(pStoch,u₀MapStoch,discreteProblem,jumpProblem,u,C,M,T,k
     return init(jumpProblem[1], SSAStepper())
 end
 
-function resetObservables(axCis,axMed,axTra,nMax,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,stochTimeAvCisObservable,stochTimeAvMedObservable,stochTimeAvTraObservable,dwellTimeObservable)
+function resetObservables(nMax,deterministicCisObservable,deterministicMedObservable,deterministicTraObservable,stochasticCisObservable,stochasticMedObservable,stochasticTraObservable,stochTimeAvCisObservable,stochTimeAvMedObservable,stochTimeAvTraObservable,dwellTimeObservable,xLimTimeAv)
 
     stochasticCisObservable[] .= zeros(Int32,nMax)
     stochasticCisObservable[] = stochasticCisObservable[]
@@ -56,11 +56,11 @@ function resetObservables(axCis,axMed,axTra,nMax,deterministicCisObservable,dete
 	deterministicTraObservable[] .= zeros(Float32,nMax)
     deterministicTraObservable[] = deterministicTraObservable[]
 
-    xlims!(axCis,(0.0,5.0))
-    xlims!(axMed,(0.0,5.0))
-    xlims!(axTra,(0.0,5.0))
     dwellTimeObservable[] .= zeros(Float32,7)
     dwellTimeObservable[] = dwellTimeObservable[]
+
+    xLimTimeAv[] = 5.0
+    xLimTimeAv[] = xLimTimeAv[]
 
 end
 

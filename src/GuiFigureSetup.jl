@@ -72,10 +72,10 @@ function guiFigureSetup(ksInit)
     rowsize!(fig.layout,3,Relative(0.25))
     resize_to_layout!(fig)
 
-    xLimTimeAv = [5.0]
-    xlims!(axCis,(0.0,1.1*xLimTimeAv[1]))
-    xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
-    xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))                
+    xLimTimeAv = Observable(5.0)
+    xlims!(axCis,(0.0,1.1*xLimTimeAv[]))
+    xlims!(axMed,(0.0,1.1*xLimTimeAv[]))
+    xlims!(axTra,(0.0,1.1*xLimTimeAv[]))                
 
     return fig, axCis, axMed, axTra, axDwell, parameterSliders, run, reset, linearityToggle, xLimTimeAv, linearityToggle
 end
