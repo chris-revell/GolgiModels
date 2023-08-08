@@ -4,8 +4,6 @@
 #
 #  Created by Christopher Revell on 28/04/2023.
 
-# module ResetStep
-
 # Function to reset figure
 function resetStepODE!(integODE,nMax,ksInit, linearityToggleVal)
     if linearityToggleVal

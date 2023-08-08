@@ -4,13 +4,10 @@
 #
 #  Created by Christopher Revell on 28/04/2023.
 
-# module GuiFigureSetup
-
 using WGLMakie
 using FileIO
 using DrWatson
 
-# Function to setup figure
 function guiFigureSetup(ksInit)
     
     fig = Figure(resolution=(2000,1500),fontsize=32)
@@ -80,13 +77,5 @@ function guiFigureSetup(ksInit)
     xlims!(axMed,(0.0,1.1*xLimTimeAv[1]))
     xlims!(axTra,(0.0,1.1*xLimTimeAv[1]))                
 
-    # Pull parameters from slider positions
-    # kObservables = [s.value for s in parameterSliders.sliders]
-
-    return fig, axCis, axMed, axTra, axDwell, parameterSliders, run, reset, linearityToggle, xLimTimeAv, linearityToggle#, kObservables
+    return fig, axCis, axMed, axTra, axDwell, parameterSliders, run, reset, linearityToggle, xLimTimeAv, linearityToggle
 end
-
-
-# export guiFigureSetup
-
-# end
