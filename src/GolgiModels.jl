@@ -1,5 +1,5 @@
 #
-#  InteractiveGui.jl
+#  GolgiModels.jl
 #  GolgiModels
 #
 #  Created by Christopher Revell on 28/04/23.

@@ -1,4 +1,8 @@
-
+#
+#  HattedConstants.jl
+#  GolgiModels
+#
+#  Created by Christopher Revell on 27/07/2023.
 
 
 
