@@ -36,7 +36,7 @@
 # using DynamicalSystems
 using DifferentialEquations
 using Makie
-using GLMakie; GLMakie.activate!()
+using WGLMakie; WGLMakie.activate!()
 using DrWatson
 using UnPack
 using GeometryBasics
@@ -44,10 +44,10 @@ using FileIO
 using Catalyst
 using FromFile
 using Format
-# using JSServe
+using JSServe
 
-# # TODO: handle this by environment variables instead
-# JSServe.configure_server!(listen_port=9384, listen_url="0.0.0.0")
+# TODO: handle this by environment variables instead
+JSServe.configure_server!(listen_port=9384, listen_url="0.0.0.0")
 
 @from "$(projectdir("src","AllReactions.jl"))" using AllReactions
 # @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup

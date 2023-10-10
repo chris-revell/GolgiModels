@@ -38,7 +38,7 @@ module GolgiModels
 using PrecompileTools
 using DifferentialEquations
 using Makie
-using GLMakie; GLMakie.activate!()
+using WGLMakie; WGLMakie.activate!()
 using DrWatson
 using UnPack
 using GeometryBasics
@@ -46,7 +46,7 @@ using FileIO
 using Catalyst
 using FromFile
 using Format
-# using JSServe
+using JSServe
 
 include(srcdir("AllReactions.jl"))
 include(srcdir("GuiFigureSetup.jl"))
@@ -57,7 +57,7 @@ include(srcdir("HattedConstants.jl"))
 
 function golgiApp(; displayFlag=true)
 
-    # JSServe.configure_server!(listen_port=9384, listen_url="0.0.0.0")
+    JSServe.configure_server!(listen_port=9384, listen_url="0.0.0.0")
 
     nMax = 20           # Max compartment size /vesicles
     dt = 100.0          # Integration time interval /seconds
