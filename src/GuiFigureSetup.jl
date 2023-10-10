@@ -4,7 +4,7 @@
 #
 #  Created by Christopher Revell on 28/04/2023.
 
-using WGLMakie
+using GLMakie
 using FileIO
 using DrWatson
 

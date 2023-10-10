@@ -44,9 +44,6 @@ using Catalyst
 using FromFile
 using Format
 
-# using WGLMakie
-# WGLMakie.activate!()
-
 @from "$(projectdir("src","AllReactionsNonLinear.jl"))" using AllReactionsNonLinear
 @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
 
