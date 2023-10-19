@@ -4,9 +4,6 @@
 #
 #  Created by Christopher Revell on 28/04/2023.
 
-using OrdinaryDiffEq
-using ForwardDiff
-
 function refreshSystem(nMax,C,M,T,k,t,linearityToggleVal)
     if linearityToggleVal
         system = allReactions(nMax,C,M,T,k,t)
