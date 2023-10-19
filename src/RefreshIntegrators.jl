@@ -4,6 +4,9 @@
 #
 #  Created by Christopher Revell on 28/04/2023.
 
+using OrdinaryDiffEq
+using ForwardDiff
+
 function refreshSystem(nMax,C,M,T,k,t,linearityToggleVal)
     if linearityToggleVal
         system = allReactions(nMax,C,M,T,k,t)
@@ -16,11 +19,11 @@ function refreshODEs(nMax,C,M,T,k,t,ks,system)
     # Map symbolic paramters to values. Collect symbolic parameters into a vector.
     pODE = Pair.(collect(k),ks)
     # Map symbolic state vector to vector of values. Collect symbolic state variables into a single vector.
-    u₀MapODE = Pair.([collect(C); collect(M); collect(T)], zeros(Float32,3*nMax))
+    u₀MapODE = Pair.([collect(C); collect(M); collect(T)], zeros(Float64,3*nMax))
     # Create problem object
     odeProblem = ODEProblem(system,u₀MapODE,(0.0,Inf),pODE)
     # Create integrator object
-    integODE = init(odeProblem,Tsit5()) #KenCarp4())
+    integODE = init(odeProblem,Rodas4P(),maxiters=1e6) #KenCarp4())
     
     return integODE
 end
@@ -42,21 +45,21 @@ function resetObservables(nMax,deterministicCisObservable,deterministicMedObserv
 	stochasticTraObservable[] .= zeros(Int32,nMax)
     stochasticTraObservable[] = stochasticTraObservable[]
 
-    stochTimeAvCisObservable[] .= zeros(Float32,nMax)
+    stochTimeAvCisObservable[] .= zeros(Float64,nMax)
     stochTimeAvCisObservable[] = stochTimeAvCisObservable[]
-    stochTimeAvMedObservable[] .= zeros(Float32,nMax)
+    stochTimeAvMedObservable[] .= zeros(Float64,nMax)
     stochTimeAvMedObservable[] = stochTimeAvMedObservable[]
-    stochTimeAvTraObservable[] .= zeros(Float32,nMax)
+    stochTimeAvTraObservable[] .= zeros(Float64,nMax)
     stochTimeAvTraObservable[] = stochTimeAvTraObservable[]
 
-    deterministicCisObservable[] .= zeros(Float32,nMax)
+    deterministicCisObservable[] .= zeros(Float64,nMax)
     deterministicCisObservable[] = deterministicCisObservable[]
-	deterministicMedObservable[] .= zeros(Float32,nMax)
+	deterministicMedObservable[] .= zeros(Float64,nMax)
     deterministicMedObservable[] = deterministicMedObservable[]
-	deterministicTraObservable[] .= zeros(Float32,nMax)
+	deterministicTraObservable[] .= zeros(Float64,nMax)
     deterministicTraObservable[] = deterministicTraObservable[]
 
-    dwellTimeObservable[] .= zeros(Float32,7)
+    dwellTimeObservable[] .= zeros(Float64,7)
     dwellTimeObservable[] = dwellTimeObservable[]
 
     xLimTimeAv[] = 5.0

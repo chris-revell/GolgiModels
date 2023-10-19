@@ -98,18 +98,18 @@ function golgiApp(; displayFlag=true)
         [values...]
     end
     # Set up observable objects for cis, med, and trans results
-    deterministicCisObservable = Observable(zeros(Float32, nMax))
-    deterministicMedObservable = Observable(zeros(Float32, nMax))
-    deterministicTraObservable = Observable(zeros(Float32, nMax))
-    dwellTimeObservable = Observable(zeros(Float32, 7))
+    deterministicCisObservable = Observable(zeros(Float64, nMax))
+    deterministicMedObservable = Observable(zeros(Float64, nMax))
+    deterministicTraObservable = Observable(zeros(Float64, nMax))
+    dwellTimeObservable = Observable(zeros(Float64, 7))
     # Set up observable objects for cis, med, and trans results
     stochasticCisObservable = Observable(zeros(Int32, nMax))
     stochasticMedObservable = Observable(zeros(Int32, nMax))
     stochasticTraObservable = Observable(zeros(Int32, nMax))
     # Observables for stochastic time averages
-    stochTimeAvCisObservable = Observable(zeros(Float32, nMax))
-    stochTimeAvMedObservable = Observable(zeros(Float32, nMax))
-    stochTimeAvTraObservable = Observable(zeros(Float32, nMax))
+    stochTimeAvCisObservable = Observable(zeros(Float64, nMax))
+    stochTimeAvMedObservable = Observable(zeros(Float64, nMax))
+    stochTimeAvTraObservable = Observable(zeros(Float64, nMax))
 
     # 44444444444444444444444
 
@@ -124,7 +124,7 @@ function golgiApp(; displayFlag=true)
     lines!(axMed, stochTimeAvMedObservable, collect(1:nMax), color=(:black, 0.5), linestyle="--", linewidth=6)
     lines!(axTra, stochTimeAvTraObservable, collect(1:nMax), color=(:black, 0.5), linestyle="--", linewidth=6)
     barplot!(axDwell, collect(1:7), dwellTimeObservable, direction=:y, bins=collect(0.5:1.0:nMax+0.5), color=:blue)
-    dwellTimesValues = zeros(Float32, 7)
+    dwellTimesValues = zeros(Float64, 7)
 
 
     # Set up button actions
@@ -205,9 +205,9 @@ function golgiApp(; displayFlag=true)
     displayFlag == true ? display(fig) : nothing
 end
 
-@compile_workload begin
-    golgiApp(displayFlag=false)
-end
+# @compile_workload begin
+#     golgiApp(displayFlag=false)
+# end
 
 export golgiApp
 
