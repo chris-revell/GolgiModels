@@ -111,8 +111,6 @@ function golgiApp(; displayFlag=true)
     stochTimeAvMedObservable = Observable(zeros(Float64, nMax))
     stochTimeAvTraObservable = Observable(zeros(Float64, nMax))
 
-    # 44444444444444444444444
-
     # Initialise plots
     lines!(axCis, deterministicCisObservable, collect(1:nMax), color=(:red, 1.0), linewidth=6)
     lines!(axMed, deterministicMedObservable, collect(1:nMax), color=(:green, 1.0), linewidth=6)
@@ -127,11 +125,12 @@ function golgiApp(; displayFlag=true)
     dwellTimesValues = zeros(Float64, 7)
 
 
-    # Set up button actions
+# Set up button actions
     # Start/stop system when run button is clicked
     on(run.clicks) do clicks
         isrunning[] = !isrunning[]
     end
+
     # Reset system when reset button is clicked 
     on(reset.clicks) do clicks
         isrunning[] = false
@@ -146,6 +145,7 @@ function golgiApp(; displayFlag=true)
         # Refresh all plots
         resetObservables(nMax, deterministicCisObservable, deterministicMedObservable, deterministicTraObservable, stochasticCisObservable, stochasticMedObservable, stochasticTraObservable, stochTimeAvCisObservable, stochTimeAvMedObservable, stochTimeAvTraObservable, dwellTimeObservable, xLimTimeAv)
     end
+
     # Switch linearity when linearityToggle is changed
     on(linearityToggle.active) do linearityValue
         # Reset reaction system dependent on value of linearity toggle
@@ -163,6 +163,7 @@ function golgiApp(; displayFlag=true)
         integStoch[1] = refreshStoch!(pStoch, u₀MapStoch, discreteProblem, jumpProblem, integStoch[1].u, C, M, T, k, kStochFactors .* ksVals, system[1])
     end
 
+    # Update x limits on changes to xLimTimeAv
     on(xLimTimeAv) do x
         xlims!(axCis, (0.0, 1.1 * x))
         xlims!(axMed, (0.0, 1.1 * x))
@@ -194,7 +195,6 @@ function golgiApp(; displayFlag=true)
             ###########
 
             # Find time averaged maximum value to set xlim
-            # xLimTimeAv[] = (xLimTimeAv[] * 19 + max(maximum(integStoch[1].u), maximum(integODE[1].u))) / 20
             xLimTimeAv[] = (xLimTimeAv[] * 19 + maximum(integODE[1].u)*V) / 20
             xLimTimeAv[] = xLimTimeAv[]            
 
