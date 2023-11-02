@@ -20,7 +20,7 @@ function refreshODEs(nMax,C,M,T,k,t,ks,system)
     # Create problem object
     odeProblem = ODEProblem(system,u₀MapODE,(0.0,Inf),pODE)
     # Create integrator object
-    integODE = init(odeProblem,Rodas4P(),maxiters=1e6) #KenCarp4())
+    integODE = init(odeProblem,KenCarp4(),maxiters=1e6) #KenCarp4()) Rodas4P
     
     return integODE
 end
