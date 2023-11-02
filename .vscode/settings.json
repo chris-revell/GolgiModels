@@ -9,7 +9,7 @@
     "julia.lint.run": false,
     "julia.lint.typeparam": false,
     "julia.lint.useoffuncargs": false,
-    "julia.focusPlotNavigator": true,
+    "julia.focusPlotNavigator": false,
     "editor.inlineSuggest.enabled": false,
     "typescript.tsserver.web.projectWideIntellisense.enabled": false,
     "typescript.tsserver.web.projectWideIntellisense.suppressSemanticErrors": false,
