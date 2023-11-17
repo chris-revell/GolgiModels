@@ -38,7 +38,7 @@ module GolgiApp
 # using PrecompileTools
 using DifferentialEquations
 using Makie
-using WGLMakie
+using GLMakie
 using DrWatson
 using UnPack
 using GeometryBasics
@@ -46,7 +46,6 @@ using FileIO
 using Catalyst
 using FromFile
 using Format
-using JSServe
 
 include(srcdir("AllReactions.jl"))
 include(srcdir("GuiFigureSetup.jl"))
@@ -56,9 +55,7 @@ include(srcdir("RefreshIntegrators.jl"))
 include(srcdir("HattedConstants.jl"))
 
 function golgiApp(; displayFlag=true)
-    WGLMakie.activate!()
-    JSServe.configure_server!(listen_port=9384, listen_url="0.0.0.0")
-
+    
     nMax = 20           # Max compartment size /vesicles
     dt = 100.0          # Integration time interval /seconds
     V = 10              # μm³
@@ -125,12 +122,11 @@ function golgiApp(; displayFlag=true)
     dwellTimesValues = zeros(Float64, 7)
 
 
-# Set up button actions
+    # Set up button actions
     # Start/stop system when run button is clicked
     on(run.clicks) do clicks
         isrunning[] = !isrunning[]
     end
-
     # Reset system when reset button is clicked 
     on(reset.clicks) do clicks
         isrunning[] = false
@@ -145,7 +141,6 @@ function golgiApp(; displayFlag=true)
         # Refresh all plots
         resetObservables(nMax, deterministicCisObservable, deterministicMedObservable, deterministicTraObservable, stochasticCisObservable, stochasticMedObservable, stochasticTraObservable, stochTimeAvCisObservable, stochTimeAvMedObservable, stochTimeAvTraObservable, dwellTimeObservable, xLimTimeAv)
     end
-
     # Switch linearity when linearityToggle is changed
     on(linearityToggle.active) do linearityValue
         # Reset reaction system dependent on value of linearity toggle
@@ -156,13 +151,11 @@ function golgiApp(; displayFlag=true)
         integStoch[1] = refreshStoch!(pStoch, u₀MapStoch, discreteProblem, jumpProblem, zeros(Int32, 3 * nMax), C, M, T, k, ksInit .* kStochFactors, system[1])       
         resetObservables(nMax, deterministicCisObservable, deterministicMedObservable, deterministicTraObservable, stochasticCisObservable, stochasticMedObservable, stochasticTraObservable, stochTimeAvCisObservable, stochTimeAvMedObservable, stochTimeAvTraObservable, dwellTimeObservable, xLimTimeAv)
     end
-
     # Update integrators on changes to slider grid
     on(ksObservable) do ksVals
         integODE[1].p .= ksVals
         integStoch[1] = refreshStoch!(pStoch, u₀MapStoch, discreteProblem, jumpProblem, integStoch[1].u, C, M, T, k, kStochFactors .* ksVals, system[1])
     end
-
     # Update x limits on changes to xLimTimeAv
     on(xLimTimeAv) do x
         xlims!(axCis, (0.0, 1.1 * x))
@@ -171,7 +164,6 @@ function golgiApp(; displayFlag=true)
     end
 
     
-
     # Start main loop when run button is clicked 
     on(run.clicks) do clicks
         @sync while isrunning[]
@@ -192,7 +184,6 @@ function golgiApp(; displayFlag=true)
             dwellTimeObservable[] .= dwellTimesValues
             dwellTimeObservable[] = dwellTimeObservable[]
             ylims!(axDwell, (0, maximum(dwellTimesValues)))
-            ###########
 
             # Find time averaged maximum value to set xlim
             xLimTimeAv[] = (xLimTimeAv[] * 19 + maximum(integODE[1].u)*V) / 20

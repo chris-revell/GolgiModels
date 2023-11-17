@@ -70,7 +70,7 @@ function golgiSolve(nMax,tMax)
     system = allReactions(nMax,C,M,T,k,t)
 
     # Initialise ODE integrator (within array so it's a mutable object for ease of later updating)
-    integODE = refreshODEs(nMax, C, M, T, k, t, ksInit, system)
+    integODE = refreshODEs(nMax, C, M, T, k, t, ks, system)
     pODE = Pair.(collect(k),ks)
     # Map symbolic state vector to vector of values. Collect symbolic state variables into a single vector.
     u₀MapODE = Pair.([collect(C); collect(M); collect(T)], zeros(Float64,3*nMax))
@@ -80,7 +80,7 @@ function golgiSolve(nMax,tMax)
     uODE = (solODE.u[end]).*V
  
     # Initialise stochastic integrator and accompanying objects (within arrays so they are mutable objects for ease of later updating)
-    pStoch = Pair.(collect(k), kStochFactors.*ksInit)
+    pStoch = Pair.(collect(k), kStochFactors.*ks)
     u₀MapStoch = Pair.([collect(C); collect(M); collect(T)], zeros(Int32, 3 * nMax))
     discreteProblem = DiscreteProblem(system, u₀MapStoch, (0.0, tMax), pStoch)
     jumpProblem = JumpProblem(system, discreteProblem, Direct(), save_positions=(false, false)) # Converts system to a set of MassActionJumps
@@ -90,9 +90,9 @@ function golgiSolve(nMax,tMax)
 
 
     if linearity
-        hattedConstantsLinear!(ks, k̂, uODE, nMax)
+        hattedConstantsLinear!(ks, k̂, solODE[end], nMax)
     else 
-        hattedConstantsNonLinear!(ks, k̂, uStoch, nMax)
+        hattedConstantsNonLinear!(ks, k̂, solStoch[end], nMax)
     end
     #   Improve this block; remove need for dwellTimesValues array
     dwellTimes = Float64[]
