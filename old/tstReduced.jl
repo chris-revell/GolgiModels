@@ -14,7 +14,7 @@ include(srcdir("AllReactions.jl"))
 include(srcdir("GuiFigureSetup.jl"))
 include(srcdir("DwellTimes.jl"))
 include(srcdir("AnimStep.jl"))
-include(srcdir("RefreshIntegrators.jl"))
+include(srcdir("RefreshObjects.jl"))
 include(srcdir("HattedConstants.jl"))
 
 linearity = true

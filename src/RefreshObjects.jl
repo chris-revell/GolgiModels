@@ -1,5 +1,5 @@
 #
-#  RefreshIntegrators.jl
+#  RefreshObjects.jl
 #  GolgiModels
 #
 #  Created by Christopher Revell on 28/04/2023.
@@ -8,7 +8,7 @@ function refreshSystem(nMax,C,M,T,k,t,linearityToggleVal)
     if linearityToggleVal
         system = allReactions(nMax,C,M,T,k,t)
     else
-        system = allReactionsNonLinear(nMax,C,M,T,k,t)
+        system = allReactionsHeterogeneous(nMax,C,M,T,k,t)
     end
 end
 

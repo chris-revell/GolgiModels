@@ -46,16 +46,17 @@ include(srcdir("AllReactions.jl"))
 include(srcdir("GuiFigureSetup.jl"))
 include(srcdir("DwellTimes.jl"))
 include(srcdir("AnimStep.jl"))
-include(srcdir("RefreshIntegrators.jl"))
+include(srcdir("RefreshObjects.jl"))
 include(srcdir("HattedConstants.jl"))
 
-function golgiSolve(nMax,tMax)
-
+function golgiSolve(;
+    nMax=20,
+    tMax=Inf,
+    V=10,
+    ks = [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0],
     linearity = true
-    nMax = 20           # Max compartment size /vesicles
-    dt = 100.0          # Integration time interval /seconds
-    V = 10              # μm³
-    ks = [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]
+    )
+    
     k̂ = [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]
     kStochFactors = [V, 1 / V, 1.0, 1.0, 1.0, 1 / V, 1.0, 1.0, 1.0, 1 / V, 1.0, 1.0]
 

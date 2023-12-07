@@ -21,11 +21,11 @@ function guiFigureSetup(ksInit)
     hidedecorations!(axDiagram)
     hidespines!(axDiagram)
 
-    axCis = Axis(grd2[1,1], ylabel = "Compartment size")
+    axCis = Axis(grd2[1,1], ylabel = "Compartment size")#, yscale=Makie.pseudolog10)
     # xlims!(axCis,(0,3))
-    axMed = Axis(grd2[1,2], yticksvisible=false)
+    axMed = Axis(grd2[1,2], yticksvisible=false)#, yscale=Makie.pseudolog10)
     # xlims!(axMed,(0,3))
-    axTra = Axis(grd2[1,3], yticksvisible=false)
+    axTra = Axis(grd2[1,3], yticksvisible=false)#, yscale=Makie.pseudolog10)
     # xlims!(axTra,(0,3))
 
     axDwell = Axis(grd3[1:2,4],title = "Dwell Times")
@@ -38,9 +38,9 @@ function guiFigureSetup(ksInit)
     hidedecorations!(axReducedDiagram); hidespines!(axReducedDiagram)
     image!(axReducedDiagram,rotr90(load(projectdir("supplementary","GolgiCompartmentModel_reduced.png"))))
 
-    Label(grd2[1,1,Bottom()],"Cis",fontsize=32)
-    Label(grd2[1,2,Bottom()],"Medial",fontsize=32)
-    Label(grd2[1,3,Bottom()],"Trans",fontsize=32)
+    Label(grd2[1,1,Top()],"Cis",fontsize=32)
+    Label(grd2[1,2,Top()],"Medial",fontsize=32)
+    Label(grd2[1,3,Top()],"Trans",fontsize=32)
 
     # Set up parameter sliders
     parameterSliders = SliderGrid(

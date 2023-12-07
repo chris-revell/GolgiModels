@@ -47,7 +47,7 @@ using Format
 # using WGLMakie
 # WGLMakie.activate!()
 
-@from "$(projectdir("src","AllReactionsNonLinear.jl"))" using AllReactionsNonLinear
+@from "$(projectdir("src","allReactionsHeterogeneous.jl"))" using allReactionsHeterogeneous
 @from "$(projectdir("src","GuiFigureSetup.jl"))" using GuiFigureSetup
 
 # Function to update figure based on system iteration
@@ -105,7 +105,7 @@ ksInit = [1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0]
 @species C(t)[1:nMax] M(t)[1:nMax] T(t)[1:nMax] 
 # Use these parameters and variables to define a reaction system 
 # vector to store the Reactions
-system = allReactionsNonLinear(nMax,C,M,T,k,t)
+system = allReactionsHeterogeneous(nMax,C,M,T,k,t)
 
 
 # Map symbolic paramters to values. Collect symbolic parameters into a vector.
