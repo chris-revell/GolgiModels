@@ -1,117 +1,94 @@
 
-using CairoMakie
 using DifferentialEquations
-using DrWatson
-using UnPack
-using FromFile
-using DiffEqCallbacks
 using Distributions
 using Turing
-using DataStructures
 using DataFrames
-
-function fAcceleration(du, u, p, t) 
-    du .= 0.5*p[1]*t^2
+using CairoMakie
+using StatsBase
+using LinearAlgebra
+using Statistics
+##
+# Function describing rate of change of position of accelerating particle 
+function fTest(du, u, p, t) 
+    du .= p[1].*u
 end
-
-pODE = [2.0]
-u₀ODE = [0.0]
-# Create problem object
-odeProblem = ODEProblem(fAcceleration,u₀ODE,(0.0,10.0),pODE)
-sol = solve(odeProblem, saveat=0.1)
-
-dummyData = first.(sol.u).+ rand(Uniform(-20,20),101)
+##
+# Dummy data created by adding noise to a previous solution 
+odeProblem = ODEProblem(fTest,[1.0],(0.0,1.5),[2.0])
+sol = solve(odeProblem, saveat=0.01)
+dummyData = first.(sol.u).+ rand(Normal(0.0,5.0),151)
 
 ##
-
+# Model for inference 
 @model function fitmodel(data, prob)
     # Prior
-    σ ~ InverseGamma(2, 3)
-    a ~ Uniform(1.0,5.0)#,0.1,5.0)
-    
-    p = [a]
-    prob = remake(prob, p=p)
-    sol = solve(odeProblem)
+    σ ~ InverseGamma(1, 50)
+    a ~ Normal(1.5,2.0)
+    # Likelihood
+    prob = remake(prob, p=[a])
+    sol = solve(prob, saveat=0.01)
     predicted = first.(sol.u)
 
     for i = 1:length(predicted)
-        data[i] ~ Normal(predicted[i], σ^2)
+        data[i] ~ Normal(predicted[i], σ)
     end
     return data
 end
-
 ##
-
+# Sampling 
 model = fitmodel(dummyData, odeProblem)
-
-iterations = 10000
-# iterator = NUTS(0.65)#HMCDA(0.15, 0.65) #HMCDA(0.15, 0.65) # SMC() # PG(10) # HMC(0.1, 5) # Gibbs(PG(10, :m) # HMC(0.1, 5, :s²)) # HMCDA(0.15, 0.65) # NUTS(0.65)
-# chain = sample(model, iterator, iterations)
-chain = sample(model, NUTS(), MCMCSerial(), iterations, 3)
+iterations = 1000
+nChains = 4
+chain = sample(model, NUTS(0.99), MCMCSerial(), iterations, nChains)
 chainDF = DataFrame(chain)
 
-
+##
+# Solve with acceleration = mean of prior distribution 
+odeProblem = ODEProblem(fTest,[1.0],(0.0,1.5),[mean(chainDF[!,:a])])
+sol = solve(odeProblem, saveat=0.01)
 ##
 
-fig = Figure(resolution=(2000, 2000), fontsize=36)
+
+hist = fit(Histogram, chainDF[!,:a], nbins=100)
+histNormalised = normalize(hist)
+dx = Float64(hist.edges[1][2] - hist.edges[1][1])
+mode = Float64(hist.edges[1][findmax(hist.weights)[2]]+dx/2.0)
+# mean = Statistics.mean(chainDF[!,:a])
+maxWeight = maximum(hist.weights)
+##
+
+# Plot solution 
+fig = Figure(resolution=(1000, 500), fontsize=18)
 predictionFig = GridLayout(fig[1,1])
 axPrediction = Axis(predictionFig[1,1],aspect=AxisAspect(2.5))
-
-pODE = [mean(chainDF[!,:a])]
-u₀ODE = [0.0]
-# Create problem object
-odeProblem = ODEProblem(fAcceleration,u₀ODE,(0.0,10.0),pODE)
-sol = solve(odeProblem, saveat=0.1)
 sca = CairoMakie.scatter!(axPrediction, sol.t, dummyData, label="Dummy data")
-lin = CairoMakie.lines!(axPrediction, sol.t, first.(sol.u), label="Model with fitted parameters")
-# CairoMakie.lines!(axPrediction, collect(1:nMax), mean(chainDF[!,:k]).*[exp(-x/mean(chainDF[!,:θ])) for x=1:20], label="Model with fitted parameters")
-Legend(predictionFig[1, 2],
-    [lin, sca],
-    ["Prediction", "Data"])
+lin = CairoMakie.lines!(axPrediction, sol.t, first.(sol.u), label="Prediction")
+# for i=1:length(hist.weights)
+#     odeProblem = ODEProblem(fTest,[1.0],(0.0,1.5),[Float64(hist.edges[1][i]+dx/2.0)])
+#     sol = solve(odeProblem, saveat=0.01)
+#     CairoMakie.lines!(axPrediction, sol.t, first.(sol.u), color=(:black,0.5*hist.weights[i]/maxWeight))
+# end
 
-params = names(chain, :parameters)
-n_chains = length(chains(chain))
-n_samples = length(chain)
+# ax2 = Axis(fig[1, 2])
+# barplot!(ax2,hist,color=(Makie.wong_colors()[1],0.8))
 
+Legend(predictionFig[1, 2],[lin, sca],["Prediction", "Data"])
+# Plot samples and prior distributions
 chainFig = GridLayout(fig[2,1]) 
-
-for (i, param) in enumerate(params)
-    ax = Axis(chainFig[i, 1]; ylabel=string(param))
-    for c in 1:n_chains
+for (i, param) in enumerate(names(chain, :parameters))
+    ax1 = Axis(chainFig[i, 1]; ylabel=string(param))
+    ax2 = Axis(chainFig[i, 2]; ylabel=string(param))
+    for c in 1:length(chains(chain))
         values = chain[:, param, c]
-        CairoMakie.scatter!(ax, 1:n_samples, values; label=string(i),markersize=10,markerspace=:pixel,color=(:black,0.2))
-    end
-
-    if i < length(params)
-        hidexdecorations!(ax; grid=false)
-    else
-        ax.xlabel = "Iteration"
+        CairoMakie.scatter!(ax1, 1:length(chain), values; label=string(i),markersize=5,markerspace=:pixel,color=(:black,0.1))
+        values = chain[:, param, c]
+        CairoMakie.density!(ax2, values; label=string(i))        
     end
 end
-
-for (i, param) in enumerate(params)
-    ax = Axis(chainFig[i, 2]; ylabel=string(param))
-    for c in 1:n_chains
-        values = chain[:, param, c]
-        CairoMakie.density!(ax, values; label=string(i))
-    end
-
-    if i == length(params)
-        ax.xlabel = "Parameter estimate"
-    end
-end
-
-# axes = [only(contents(chainFig[i, 2])) for i in 1:length(params)]
-# linkxaxes!(axes...)
-
 rowsize!(fig.layout, 2, Relative(3/4))
-
 display(fig)
+
+
 
 ##
 # save("bayesianIterations.png",fig)
-
-
-# using StatsPlots
-# StatsPlots.plot(chain)
-

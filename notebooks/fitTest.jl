@@ -58,24 +58,24 @@ end
     # Prior
     σ ~ InverseGamma(2, 3)
     # k₂ ~ truncated(Normal(1.0,0.2),0.2,0.4)
-    k₃ ~Uniform(1.0,2.0) #truncated(Normal(1.2,0.2),1.0,2.0)
-    k₄ ~Uniform(0.0,1.2) #truncated(Normal(1.0,0.2),0.0,1.2)
-    V ~ Uniform(200.0,400.0) #truncated(Normal(300,100),100.0,500.0)
+    k₃ ~ Normal(1.2,0.2)
+    k₄ ~ Normal(1.0,0.2)
+    V ~  Normal(300,100)
     # Likelihood
     p = [1.0,1.0,k₃,k₄]
     prob = remake(prob, p=p)
-    sol = solve(odeProblem,callback=TerminateSteadyState(min_t=100.0),save_idxs = [1])
+    sol = solve(prob,callback=TerminateSteadyState(min_t=100.0),save_idxs = [1])
     predicted = sol.u[end].*V
 
     if !(SciMLBase.successful_retcode(sol.retcode))
         Turing.@addlogprob! -Inf
-        return
+        return nothing
     elseif predicted[end]>predicted[1]
         Turing.@addlogprob! -Inf
-        return
+        return nothing
     end
     for i = 1:length(predicted)
-        data[i] ~ Normal(predicted[i], σ^2)
+        data[i] ~ Normal(predicted[i], σ)
     end
     return data
 end
@@ -84,42 +84,49 @@ end
 
 model = fitmodel(dummyData, odeProblem)
 
-iterations = 10000
+iterations = 100
 # iterator = NUTS(0.65)#HMCDA(0.15, 0.65) #HMCDA(0.15, 0.65) # SMC() # PG(10) # HMC(0.1, 5) # Gibbs(PG(10, :m) # HMC(0.1, 5, :s²)) # HMCDA(0.15, 0.65) # NUTS(0.65)
 # chain = sample(model, iterator, iterations)
-chain = sample(model, NUTS(), MCMCSerial(), iterations, 5)
+chain = sample(model, NUTS(0.65), MCMCSerial(), iterations, 1)
 chainDF = DataFrame(chain)
-
 
 ##
 
-σHistogram = fit(Histogram, chainDF[!,:σ], nbins=iterations÷100)
-σHistogramNormalized = normalize(h)#, mode=:density)
+σHistogram = fit(Histogram, chainDF[!,:σ], nbins=iterations÷10)
+σHistogramNormalized = normalize(σHistogram)
 dx = σHistogram.edges[1].offset + σHistogram.edges[1].step/2
-σMode = σHistogram.edges[1].offset + σHistogram.edges[1].step/2 + σHistogram.edges[1][findmax(σHistogram.weights)[2]]
+# σMode = σHistogram.edges[1].offset + σHistogram.edges[1].step/2 + σHistogram.edges[1][findmax(σHistogram.weights)[2]]
+σMode = Float64(σHistogram.edges[1][findmax(σHistogram.weights)[2]])
+σMean = mean(chainDF[!,:σ])
 
-k₃Histogram = fit(Histogram, chainDF[!,:k₃], nbins=iterations÷100)
-k₃HistogramNormalized = normalize(h)#, mode=:density)
+k₃Histogram = fit(Histogram, chainDF[!,:k₃], nbins=iterations÷10)
+k₃HistogramNormalized = normalize(k₃Histogram)
 dx = k₃Histogram.edges[1].offset + k₃Histogram.edges[1].step/2
-k₃Mode = k₃Histogram.edges[1].offset + k₃Histogram.edges[1].step/2 + k₃Histogram.edges[1][findmax(k₃Histogram.weights)[2]]
+# k₃Mode = k₃Histogram.edges[1].offset + k₃Histogram.edges[1].step/2 + k₃Histogram.edges[1][findmax(k₃Histogram.weights)[2]]
+k₃Mode = Float64(k₃Histogram.edges[1][findmax(k₃Histogram.weights)[2]])
+k₃Mean = mean(chainDF[!,:k₃])
 
-k₄Histogram = fit(Histogram, chainDF[!,:k₄], nbins=iterations÷100)
-k₄HistogramNormalized = normalize(h)#, mode=:density)
+k₄Histogram = fit(Histogram, chainDF[!,:k₄], nbins=iterations÷10)
+k₄HistogramNormalized = normalize(k₄Histogram)
 dx = k₃Histogram.edges[1].offset + k₃Histogram.edges[1].step/2
-k₄Mode = k₄Histogram.edges[1].offset + k₄Histogram.edges[1].step/2 + k₄Histogram.edges[1][findmax(k₄Histogram.weights)[2]]
+# k₄Mode = k₄Histogram.edges[1].offset + k₄Histogram.edges[1].step/2 + k₄Histogram.edges[1][findmax(k₄Histogram.weights)[2]]
+k₄Mode = Float64(k₄Histogram.edges[1][findmax(k₄Histogram.weights)[2]])
+k₄Mean = mean(chainDF[!,:k₄])
 
-VHistogram = fit(Histogram, chainDF[!,:V], nbins=iterations÷100)
-VHistogramNormalized = normalize(h)#, mode=:density)
-VMode = VHistogram.edges[1].offset + VHistogram.edges[1].step/2 + VHistogram.edges[1][findmax(VHistogram.weights)[2]]
+VHistogram = fit(Histogram, chainDF[!,:V], nbins=iterations÷10)
+VHistogramNormalized = normalize(VHistogram)
+# VMode = VHistogram.edges[1].offset + VHistogram.edges[1].step/2 + VHistogram.edges[1][findmax(VHistogram.weights)[2]]
+VMode = Float64(VHistogram.edges[1][findmax(VHistogram.weights)[2]])
+VMean = mean(chainDF[!,:V])
 
-Modes = (σ=0.0, k₃=k₃Mode, k₄=k₄Mode, V=VMode)
+modes = (σ=σMode, k₃=k₃Mode, k₄=k₄Mode, V=VMode)
 hists = (
-    σ  σHistogram
-    k₃HistogramNormalized
-    k₄HistogramNormalized
-    VHistogramNormalized
+    σ =σHistogram,
+    k₃=k₃HistogramNormalized,
+    k₄=k₄HistogramNormalized,
+    V=VHistogramNormalized,
+)
 
-σ=0.0, k₃=k₃Mode, k₄=k₄Mode, V=VMode)
 
 ##
 
@@ -156,9 +163,9 @@ for (i, param) in enumerate(params)
     ax = Axis(chainFig[i, 1]; ylabel=string(param))
     for c in 1:n_chains
         values = chain[:, param, c]
-        CairoMakie.scatter!(ax, 1:n_samples, values; label=string(i),markersize=4,markerspace=:pixel)#,color=(:black,0.01))
+        CairoMakie.scatter!(ax, 1:n_samples, values; label=string(i),markersize=10,markerspace=:pixel,color=(Makie.wong_colors()[i],0.2))
     end
-    hlines!(ax,[Modes[param]])
+    hlines!(ax,[modes[param]])
     if i < length(params)
         hidexdecorations!(ax; grid=false)
     else
@@ -171,9 +178,9 @@ for (i, param) in enumerate(params)
     for c in 1:n_chains
         values = chain[:, param, c]
         # CairoMakie.density!(ax, values; label=string(i))
-        barplot!(ax,hist;label=string(i))
+        barplot!(ax,hists[Symbol(param)],label=string(i),color=(Makie.wong_colors()[i],0.8))
     end
-    vlines!(ax,[Modes[param]])
+    vlines!(ax,[modes[param]])
     if i == length(params)
         ax.xlabel = "Parameter estimate"
     end

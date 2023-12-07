@@ -66,6 +66,7 @@ end
 linkyaxes!(axes...)
 linkxaxes!(axes...)
 display(fig)
+save("allhistograms.png",fig)
 
 
 
