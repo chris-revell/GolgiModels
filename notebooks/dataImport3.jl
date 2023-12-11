@@ -13,17 +13,18 @@ using GeometryBasics
 
 ##
 
-measurements = DataFrame(XLSX.readtable(datadir("exp_raw","Nikki golgi data","AllNumbers.xlsx"),1))
+measurements = dropmissing(DataFrame(XLSX.readtable(datadir("exp_raw","Nikki golgi data","AllNumbers2.xlsx"),1)))
 measurements[!, [:Maturation,:CellType]] = convert.(String, measurements[!, [:Maturation,:CellType]])
 headers = Symbol.(names(measurements))
 floatHeaders = [h for h in headers if h∉[:Maturation,:CellType]]
-measurements[!, floatHeaders] = convert.(Float64, measurements[!, 3:end])
+# floatHeaders = [:MinFeret,:Area]
+measurements[!, floatHeaders] = convert.(Float64, measurements[!, floatHeaders])
 
 ##
 
 # Delete row with outlier values
-maxVolInd = findmax(measurements[!,:Area])[2]
-delete!(measurements, maxVolInd)
+# maxVolInd = findmax(measurements[!,:Area])[2]
+# delete!(measurements, maxVolInd)
 
 ##
 
@@ -35,6 +36,8 @@ step = maxVol*1.1/100
 histbins = 0.0:step:maxVol*1.1
 colors = (Cis=:red,Medial=:green,Trans=:blue)
 axes = Axis[]
+
+typicalVesicleVolume = (4π/3)*0.03^3
 
 for (ic,cellType) in enumerate(unique(measurements[!,:CellType]))#["WT", "1G6"]
     for (im,maturity) in enumerate(["Cis","Medial","Trans"])
@@ -51,6 +54,8 @@ for (ic,cellType) in enumerate(unique(measurements[!,:CellType]))#["WT", "1G6"]
         ellipseCircumferences = π.*(a.+b).*(1.0.+3.0.*h./(10.0.+sqrt.(4.0.-3.0.*h)))
         volumes = (4.0/3.0)*π.*(a.^2).*b
 
+        @show median(volumes)/typicalVesicleVolume
+
         hist = fit(Histogram, volumes, histbins)
         barplot!(ax, hist, label = "$cellType, $maturity, $(length(a))",color=colors[Symbol(maturity)],direction=:x)
         barLocations = collect(hist.edges[1]).+Float64(hist.edges[1].step)/2
@@ -66,6 +71,9 @@ end
 linkyaxes!(axes...)
 linkxaxes!(axes...)
 display(fig)
+
+##
+
 save("allhistograms.png",fig)
 
 

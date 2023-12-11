@@ -1,3 +1,4 @@
+*.png
 *.pdf
 Manifest.toml
 *.code-workspace
