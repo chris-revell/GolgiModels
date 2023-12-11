@@ -64,7 +64,7 @@ function golgiApp(; displayFlag=true)
     kStochFactors = [V, 1 / V, 1.0, 1.0, 1.0, 1 / V, 1.0, 1.0, 1.0, 1 / V, 1.0, 1.0]
 
     # Set up figure canvas
-    fig, axCis, axMed, axTra, axDwell, parameterSliders, run, reset, linearityToggle, xLimTimeAv, linearityToggle = guiFigureSetup(ksInit)
+    fig, axCis, axMed, axTra, axDwell, parameterSliders, run, reset, xLimTimeAv, menu = guiFigureSetup(ksInit)
 
     # Catalyst system setup
     # Symbolic system parameters: rate constants 
@@ -75,10 +75,10 @@ function golgiApp(; displayFlag=true)
     # Use these parameters and variables to define a reaction system 
 
     # Initialise reaction system (within array so it's a mutable object for ease of later updating)
-    system = [refreshSystem(nMax, C, M, T, k, t, true)]
+    system = [refreshSystem(nMax, C, M, T, k, t, "Basic")]
 
     # Initialise ODE integrator (within array so it's a mutable object for ease of later updating)
-    integODE = [refreshODEs(nMax, C, M, T, k, t, ksInit, system[1])]
+    integODE = [refreshODEs(nMax, C, M, T, k, ksInit, system[1])]
 
     # Initialise stochastic integrator and accompanying objects (within arrays so they are mutable objects for ease of later updating)
     pStoch = Pair.(collect(k), kStochFactors.*ksInit)
@@ -131,7 +131,7 @@ function golgiApp(; displayFlag=true)
     on(reset.clicks) do clicks
         isrunning[] = false
         # Reset ODE integrator with new reaction system
-        integODE[1] = refreshODEs(nMax, C, M, T, k, t, ksInit, system[1])
+        integODE[1] = refreshODEs(nMax, C, M, T, k, ksInit, system[1])
         # Reset stochastic integrator with new reaction system
         integStoch[1] = refreshStoch!(pStoch, u₀MapStoch, discreteProblem, jumpProblem, zeros(Int32, 3 * nMax), C, M, T, k, ksInit .* kStochFactors, system[1])
         # Return sliders to original values
@@ -142,11 +142,11 @@ function golgiApp(; displayFlag=true)
         resetObservables(nMax, deterministicCisObservable, deterministicMedObservable, deterministicTraObservable, stochasticCisObservable, stochasticMedObservable, stochasticTraObservable, stochTimeAvCisObservable, stochTimeAvMedObservable, stochTimeAvTraObservable, dwellTimeObservable, xLimTimeAv)
     end
     # Switch linearity when linearityToggle is changed
-    on(linearityToggle.active) do linearityValue
+    on(menu.selection) do selection 
         # Reset reaction system dependent on value of linearity toggle
-        system[1] = refreshSystem(nMax, C, M, T, k, t, linearityValue)
+        system[1] = refreshSystem(nMax, C, M, T, k, t, selection)
         # Reset ODE integrator with new reaction system
-        integODE[1] = refreshODEs(nMax, C, M, T, k, t, ksInit, system[1])
+        integODE[1] = refreshODEs(nMax, C, M, T, k, ksInit, system[1])
         # Reset stochastic integrator with new reaction system
         integStoch[1] = refreshStoch!(pStoch, u₀MapStoch, discreteProblem, jumpProblem, zeros(Int32, 3 * nMax), C, M, T, k, ksInit .* kStochFactors, system[1])       
         resetObservables(nMax, deterministicCisObservable, deterministicMedObservable, deterministicTraObservable, stochasticCisObservable, stochasticMedObservable, stochasticTraObservable, stochTimeAvCisObservable, stochTimeAvMedObservable, stochTimeAvTraObservable, dwellTimeObservable, xLimTimeAv)
@@ -172,7 +172,7 @@ function golgiApp(; displayFlag=true)
             animStepODE!(integODE[1], dt, axCis, axMed, axTra, deterministicCisObservable, deterministicMedObservable, deterministicTraObservable, nMax, V)
             animStepStoch!(integStoch[1], dt, axCis, axMed, axTra, stochasticCisObservable, stochasticMedObservable, stochasticTraObservable, stochTimeAvCisObservable, stochTimeAvMedObservable, stochTimeAvTraObservable, nMax)
 
-            if linearityToggle.active[]
+            if menu.selection[]=="Basic"
                 hattedConstantsLinear!(integODE[1].p, k̂, integODE[1].u, nMax)
             else 
                 hattedConstantsNonLinear!(integODE[1].p, k̂, integODE[1].u, nMax)

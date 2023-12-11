@@ -4,15 +4,17 @@
 #
 #  Created by Christopher Revell on 28/04/2023.
 
-function refreshSystem(nMax,C,M,T,k,t,linearityToggleVal)
-    if linearityToggleVal
+function refreshSystem(nMax,C,M,T,k,t,selection)
+    if selection=="Basic"
         system = allReactions(nMax,C,M,T,k,t)
-    else
-        system = allReactionsHeterogeneous(nMax,C,M,T,k,t)
+    elseif selection=="Heterogeneous"
+        sysem = allReactionsHeterogeneous(nMax,C,M,T,k,t)
+    elseif selection=="Martin"
+        system = allReactionsMartinModel(nMax,C,M,T,k,t)
     end
 end
 
-function refreshODEs(nMax,C,M,T,k,t,ks,system)
+function refreshODEs(nMax,C,M,T,k,ks,system)
     # Map symbolic paramters to values. Collect symbolic parameters into a vector.
     pODE = Pair.(collect(k),ks)
     # Map symbolic state vector to vector of values. Collect symbolic state variables into a single vector.
