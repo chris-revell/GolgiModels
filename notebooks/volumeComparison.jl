@@ -31,7 +31,7 @@ measurements[!, floatHeaders] = convert.(Float64, measurements[!, floatHeaders])
 
 ##
 
-# fig = Figure(resolution=(2000,3000))
+# fig = Figure(size=(2000,3000))
 
 maxVolInd = findmax(measurements[!,:Area])[2]
 maxVol = (4.0/3.0)*measurements[maxVolInd,:Area]*measurements[maxVolInd,:Feret]/2.0
@@ -44,7 +44,7 @@ axes = Axis[]
 
 ##
 
-fig = Figure(resolution=(1000,2000))
+fig = Figure(size=(1000,2000))
 ax1 = Axis(fig[1,1],aspect=AxisAspect(1.0),yscale=Makie.pseudolog10)
 ax2 = Axis(fig[2,1],aspect=AxisAspect(1.0),yscale=Makie.pseudolog10)
 filteredData = filter([:Maturation, :CellType] => (m, c) -> m == "Trans" && c == "WT", measurements, view=true)

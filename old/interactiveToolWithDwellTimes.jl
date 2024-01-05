@@ -142,7 +142,7 @@ integStoch = [init(jumpProblem[1], SSAStepper())]#, saveat=tMax/nOutput)
 
 
 # Set up figure canvas
-fig = Figure(resolution=(2000,1500),fontsize=32)
+fig = Figure(size=(2000,1500),fontsize=32)
 
 grd1 = GridLayout(fig[1,1])
 grd2 = GridLayout(fig[2,1])

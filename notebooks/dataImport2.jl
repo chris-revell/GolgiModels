@@ -27,7 +27,7 @@ delete!(measurements, maxVolInd)
 
 ##
 
-fig = Figure(resolution=(1000,2000))
+fig = Figure(size=(1000,2000))
 axPerim = Axis(fig[1,1], aspect=DataAspect())
 axPerim.xlabel = "Measured compartment perimeters"
 axPerim.ylabel = "Perimeters calculated from area and feret length,\nassuming compartment is an ellipse"

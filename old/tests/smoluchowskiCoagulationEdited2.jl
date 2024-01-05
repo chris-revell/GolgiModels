@@ -73,7 +73,7 @@ t   = jsol.t
 
 solMatrix = reduce(hcat,jsol.u)
 
-# fig = Figure()#resolution=(00,1000))
+# fig = Figure()#size=(00,1000))
 # ax = Axis(fig[1,1])
 # ax.xlabel="Time"
 # ax.ylabel="Oligomer count"

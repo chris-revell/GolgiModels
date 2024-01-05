@@ -124,7 +124,7 @@ uPredicted = (solPredicted.u[end]).*mean(chainDF[!,:V])
 
 ##
 # Plot solution 
-fig = Figure(resolution=(2000,2000))
+fig = Figure(size=(2000,2000))
 axMed = Axis(fig[1,1],yscale=Makie.pseudolog10)
 axTra = Axis(fig[1,2],yscale=Makie.pseudolog10)
 barplot!(axMed, medHist,color=(colors[:Cis],0.8))#,direction=:x)
@@ -167,7 +167,7 @@ end
 
 # ##
 
-# fig = Figure(resolution=(2000, 2000))
+# fig = Figure(size=(2000, 2000))
 # predictionFig = GridLayout(fig[1,1])
 # axPrediction = Axis(predictionFig[1,1],aspect=AxisAspect(2.5))
 # axPrediction.xlabel = "Compartment size"

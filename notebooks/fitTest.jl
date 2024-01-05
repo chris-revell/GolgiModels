@@ -143,7 +143,7 @@ uPredicted = (solPredicted.u[end]).*VMode
 
 ##
 
-fig = Figure(resolution=(2000, 2000))
+fig = Figure(size=(2000, 2000))
 predictionFig = GridLayout(fig[1,1])
 axPrediction = Axis(predictionFig[1,1],aspect=AxisAspect(2.5))
 axPrediction.xlabel = "Compartment size"

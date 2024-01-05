@@ -28,7 +28,7 @@ measurements[!, floatHeaders] = convert.(Float64, measurements[!, floatHeaders])
 
 ##
 
-fig = Figure(resolution=(2000,3000))
+fig = Figure(size=(2000,3000))
 
 maxVolInd = findmax(measurements[!,:Area])[2]
 maxVol = (4.0/3.0)*measurements[maxVolInd,:Area]*measurements[maxVolInd,:Feret]/2.0

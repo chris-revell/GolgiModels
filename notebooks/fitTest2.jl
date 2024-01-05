@@ -58,7 +58,7 @@ maxWeight = maximum(hist.weights)
 ##
 
 # Plot solution 
-fig = Figure(resolution=(1000, 500), fontsize=18)
+fig = Figure(size=(1000, 500), fontsize=18)
 predictionFig = GridLayout(fig[1,1])
 axPrediction = Axis(predictionFig[1,1],aspect=AxisAspect(2.5))
 sca = CairoMakie.scatter!(axPrediction, sol.t, dummyData, label="Dummy data")
