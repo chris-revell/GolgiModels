@@ -37,8 +37,8 @@ module GolgiApp
 
 # using PrecompileTools
 using DifferentialEquations
-using Makie
-using GLMakie
+# using Makie
+using GLMakie; GLMakie.activate!()
 using DrWatson
 using UnPack
 using GeometryBasics
@@ -109,15 +109,15 @@ function golgiApp(; displayFlag=true)
     stochTimeAvTraObservable = Observable(zeros(Float64, nMax))
 
     # Initialise plots
-    lines!(axCis, deterministicCisObservable, collect(1:nMax), color=(:red, 1.0), linewidth=6)
-    lines!(axMed, deterministicMedObservable, collect(1:nMax), color=(:green, 1.0), linewidth=6)
-    lines!(axTra, deterministicTraObservable, collect(1:nMax), color=(:blue, 1.0), linewidth=6)
+    lines!(axCis, deterministicCisObservable, collect(1:nMax), color=(:red, 1.0), linestyle=:solid, linewidth=6)
+    lines!(axMed, deterministicMedObservable, collect(1:nMax), color=(:green, 1.0), linestyle=:solid, linewidth=6)
+    lines!(axTra, deterministicTraObservable, collect(1:nMax), color=(:blue, 1.0), linestyle=:solid, linewidth=6)
     barplot!(axCis, collect(1:nMax), stochasticCisObservable, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:red)
     barplot!(axMed, collect(1:nMax), stochasticMedObservable, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:green)
     barplot!(axTra, collect(1:nMax), stochasticTraObservable, direction=:x, bins=collect(0.5:1.0:nMax+0.5), color=:blue)
-    lines!(axCis, stochTimeAvCisObservable, collect(1:nMax), color=(:black, 0.5), linestyle="--", linewidth=6)
-    lines!(axMed, stochTimeAvMedObservable, collect(1:nMax), color=(:black, 0.5), linestyle="--", linewidth=6)
-    lines!(axTra, stochTimeAvTraObservable, collect(1:nMax), color=(:black, 0.5), linestyle="--", linewidth=6)
+    lines!(axCis, stochTimeAvCisObservable, collect(1:nMax), color=(:black, 0.5), linestyle=:dash, linewidth=6)
+    lines!(axMed, stochTimeAvMedObservable, collect(1:nMax), color=(:black, 0.5), linestyle=:dash, linewidth=6)
+    lines!(axTra, stochTimeAvTraObservable, collect(1:nMax), color=(:black, 0.5), linestyle=:dash, linewidth=6)
     barplot!(axDwell, collect(1:7), dwellTimeObservable, direction=:y, bins=collect(0.5:1.0:nMax+0.5), color=:blue)
     dwellTimesValues = zeros(Float64, 7)
 
