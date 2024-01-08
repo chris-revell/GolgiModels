@@ -11,6 +11,8 @@ function refreshSystem(nMax,C,M,T,k,t,selection)
         sysem = allReactionsHeterogeneous(nMax,C,M,T,k,t)
     elseif selection=="Martin"
         system = allReactionsMartinModel(nMax,C,M,T,k,t)
+    elseif selection=="Arbitrary"
+        system = allReactionsArbitrarySizeFusionSplitting(nMax,C,M,T,k,t)
     end
 end
 

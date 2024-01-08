@@ -4,13 +4,13 @@
 #
 #  Created by Christopher Revell on 28/04/2023.
 
-using WGLMakie
+using GLMakie
 using FileIO
 using DrWatson
 
 function guiFigureSetup(ksInit)
     
-    fig = Figure(size=(2000,1500),fontsize=32)
+    fig = Figure(size=(1200,750),fontsize=12)
 
     grd1 = GridLayout(fig[1,1])
     grd2 = GridLayout(fig[2,1])
@@ -38,9 +38,9 @@ function guiFigureSetup(ksInit)
     hidedecorations!(axReducedDiagram); hidespines!(axReducedDiagram)
     image!(axReducedDiagram,rotr90(load(projectdir("supplementary","GolgiCompartmentModel_reduced.png"))))
 
-    Label(grd2[1,1,Top()],"Cis",fontsize=32)
-    Label(grd2[1,2,Top()],"Medial",fontsize=32)
-    Label(grd2[1,3,Top()],"Trans",fontsize=32)
+    Label(grd2[1,1,Top()],"Cis",fontsize=12)
+    Label(grd2[1,2,Top()],"Medial",fontsize=12)
+    Label(grd2[1,3,Top()],"Trans",fontsize=12)
 
     # Set up parameter sliders
     parameterSliders = SliderGrid(
@@ -57,18 +57,20 @@ function guiFigureSetup(ksInit)
         (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:2.0, startvalue=ksInit[10], format="{:.2f}"),
         (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:2.0, startvalue=ksInit[11], format="{:.2f}"),
         (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:2.0, startvalue=ksInit[12], format="{:.2f}"),
-        width = 700,
+        width = 350,
+        tellheight=true,
     )
 
     # Add stop/start button
     run = Makie.Button(grd3[2,1]; label = "Start/Stop", tellwidth = false)
     reset = Makie.Button(grd3[2,2]; label = "Reset", tellwidth = false)
 
-    menu = Menu(grd3[2, 3], options = ["Basic", "Heterogeneous", "Martin"], default = "Basic")
+    menu = Menu(grd3[2, 3], options = ["Basic", "Heterogeneous", "Martin", "Arbitrary"], default = "Basic")
     # linearityToggle = Toggle(fig, active = true)
     # toggleLabel = Label(fig, lift(x -> x ? "Linear" : "Nonlinear", linearityToggle.active))
     # grd3[2, 3] = grid!(hcat(linearityToggle, toggleLabel), tellheight = false)
 
+    rowsize!(fig.layout,1,Relative(0.5))
     rowsize!(fig.layout,2,Relative(0.25))
     rowsize!(fig.layout,3,Relative(0.25))
     resize_to_layout!(fig)
