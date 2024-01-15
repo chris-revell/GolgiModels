@@ -163,15 +163,16 @@ function golgiApp(; displayFlag=true)
         xlims!(axTra, (0.0, 1.1 * x))
     end
 
+    println("Test1")
     
     # Start main loop when run button is clicked 
     on(run.clicks) do clicks
         @sync while isrunning[]
             isopen(fig.scene) || break # ensures computations stop if closed window
-
+ println("Test2")           
             animStepODE!(integODE[1], dt, axCis, axMed, axTra, deterministicCisObservable, deterministicMedObservable, deterministicTraObservable, nMax, V)
             animStepStoch!(integStoch[1], dt, axCis, axMed, axTra, stochasticCisObservable, stochasticMedObservable, stochasticTraObservable, stochTimeAvCisObservable, stochTimeAvMedObservable, stochTimeAvTraObservable, nMax)
-
+println("Test3")
             if menu.selection[]=="Basic"
                 hattedConstantsLinear!(integODE[1].p, k̂, integODE[1].u, nMax)
             else 
@@ -184,7 +185,7 @@ function golgiApp(; displayFlag=true)
             dwellTimeObservable[] .= dwellTimesValues
             dwellTimeObservable[] = dwellTimeObservable[]
             ylims!(axDwell, (0, maximum(dwellTimesValues)))
-
+println("Test4")
             # Find time averaged maximum value to set xlim
             xLimTimeAv[] = (xLimTimeAv[] * 19 + maximum(integODE[1].u)*V) / 20
             xLimTimeAv[] = xLimTimeAv[]            

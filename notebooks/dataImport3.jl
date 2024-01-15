@@ -22,6 +22,32 @@ measurements[!, floatHeaders] = convert.(Float64, measurements[!, floatHeaders])
 
 ##
 
+fig_a = Figure(size=(1000,1000))
+ax_a = Axis(fig_a[1,1])
+ax_a.ylabel = "MinFeret"
+ax_a.xlabel = "Frequency"
+step = 0.06
+histbins = 0.0:step:maximum(measurements[!,:MinFeret])/3.0
+hist = fit(Histogram, measurements[!,:MinFeret], histbins)
+barplot!(ax_a, hist)
+vlines!(ax_a,[0.06],color=:black,linestyle=:dash)
+display(fig_a)
+save("MinFeretHist.png",fig_a)
+##
+
+fig_b = Figure(size=(1000,1000))
+ax_b = Axis(fig_a[1,1])
+ax_b.ylabel = "Area"
+ax_b.xlabel = "Frequency"
+step = π*0.06^2
+histbins = 0.0:step:maximum(measurements[!,:Area])
+hist = fit(Histogram, measurements[!,:Area], histbins)
+barplot!(ax_b, hist)
+vlines!(ax_b,[π*0.06^2],color=:black,linestyle=:dash)
+display(fig_b)
+save("AreaHist.png",fig_b)
+
+##
 # Delete row with outlier values
 # maxVolInd = findmax(measurements[!,:Area])[2]
 # delete!(measurements, maxVolInd)

@@ -10,7 +10,7 @@ using DrWatson
 
 function guiFigureSetup(ksInit)
     
-    fig = Figure(size=(1200,750),fontsize=12)
+    fig = Figure()#size=(1200,750),fontsize=12)
 
     grd1 = GridLayout(fig[1,1])
     grd2 = GridLayout(fig[2,1])
@@ -57,7 +57,7 @@ function guiFigureSetup(ksInit)
         (label="k₁₀, t₁+tₙ → tₙ₊₁" , range=0.0:0.01:2.0, startvalue=ksInit[10], format="{:.2f}"),
         (label="k₁₁, tₙ → t₁+tₙ₋₁" , range=0.0:0.01:2.0, startvalue=ksInit[11], format="{:.2f}"),
         (label="k₁₂, t₁ → ∅      " , range=0.0:0.01:2.0, startvalue=ksInit[12], format="{:.2f}"),
-        width = 350,
+        # width = 350,
         tellheight=true,
     )
 
