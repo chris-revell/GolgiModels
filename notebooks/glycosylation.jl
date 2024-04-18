@@ -1,85 +1,164 @@
-using Catalyst
 using DifferentialEquations
+using SparseArrays
+using UnPack
+using CairoMakie 
 
-nMax = 5           # Max compartment size /vesicles
-V = 10              # μm³
+# (1+αh)Ċ + β∇C = K₂K₄∇²C Gradients with respect to ν, dot with respect to time
+# Ċ = (K₂K₄∇²C - β∇C)/(1+αh)
 
-ksInit = [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]
-k̂ = [1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0, 1.0]
-kStochFactors = [V, 1 / V, 1.0, 1.0, 1.0, 1 / V, 1.0, 1.0, 1.0, 1 / V, 1.0, 1.0]
+# ν ∈ (0.0,1.0)
+# ∱ν over space = 1.0
+# ν space discretised into N points 
+N = 101
+Nghost = 1 # number of ghost points on each side of the domain 
+Nplus = N+2*Nghost # number of discretised points including ghost points 
+x = collect(range(0.0..1.0, N))
+dx = x[2]-x[1]
+α = 1.0
+h = 1.0
+β = 3.0
+K₂ = 3.0
+K₄ = 1.0  
+tMax = 3.0
 
-# Catalyst system setup
-# @parameters k[0:5]
-@parameters k₀ k₁ k₂ k₃ k₄ k₅
-@variables t
-@species C(t)[1:nMax] Q(t)[1:nMax] E(t) S(t) 
-# Use these parameters and variables to define a reaction system 
-
-reactions = []
-# Source 
-push!(reactions, Reaction(k₀, nothing, [C[1]]))            # ∅->C₁
-# Enzyme complex formation 
-for n=1:nMax
-    push!(reactions, Reaction(k₁, [C[n], E], [Q[n]])) # Cₙ+E->Qₙ
+#%%
+# https://en.wikipedia.org/wiki/Laplacian_matrix Laplacian matrix for simple graph
+# A adjacency matrix 
+A = spzeros(Int64, Nplus, Nplus)
+A[1,2] = 1
+A[Nplus,Nplus-1] = 1
+for i=2:Nplus-1
+    A[i, i-1] = 1
+    A[i, i+1] = 1
 end
-# Enzyme complex splitting without polymerisation
-for n=1:nMax
-    push!(reactions, Reaction(k₂, [Q[n]], [C[n], E])) # Qₙ->Cₙ+E
+# deg degree matrix 
+deg = spdiagm(sum(eachrow(A)))
+∇² = (A.-deg)./dx^2
+
+# https://en.wikipedia.org/wiki/Finite_difference_coefficient
+∇ = spzeros(Float64, Nplus, Nplus)
+∇[1,2] = 1
+∇[Nplus,Nplus-1] = -1
+for i=2:Nplus-1
+    ∇[i, i-1] = -1
+    ∇[i, i+1] = 1
 end
-# Complex polymerisation
-for n=1:nMax-1
-    push!(reactions, Reaction(k₃, [Q[n], S], [C[n+1]])) # Qₙ+S->Cₙ₊₁
+∇ .= ∇./(2*dx)
+
+#%%
+
+# Express model as a matrix operator 
+M = ∇².*K₂*K₄/(1+α*h) .- ∇.*β/(1+α*h)
+
+# Initial conditions using Gaussian
+u0 = zeros(Float64, Nplus)
+y = exp.((-1.0.*x.^2)./0.1^2)
+# Trapezium rule integration
+integ = [0.0]
+for i=1:length(y)-1
+    integ[1] += dx*0.5*(y[i]+y[i+1])
 end
-# Polymer depolymerisation into complex
-for n=1:nMax-1
-    push!(reactions, Reaction(k₄, [C[n+1]], [Q[n], S])) # Cₙ₊₁->Qₙ+S
+u0[Nghost+1:end-Nghost] .= y./integ[1]
+
+# Parameters named tuple
+p = (D=K₂*K₄/(1+α*h),
+    β=β/(1+α*h),
+    M=M)
+
+function boundaryConditions!(u, p)
+    @unpack D, β, M = p 
+    # D∇C - βC = 0 at periphery
+    # D(u[x+1]-u[x-1])/(2dx) - βu[x] = 0 
+    # u[x+1]-u[x-1] = 2dxβu[x]/D
+    u[1] = u[3] - 2*dx*β*u[2]/D   
+    u[end] = u[end-2] + 2*dx*β*u[end-1]/D    
 end
-# Removal of polymer 
-for n=1:nMax
-    push!(reactions, Reaction(k₅, [C[n]], nothing))           # T₁->∅
-end 
 
-# Set up reaction system object. Collect symbolic state variables into a single vector.
-@named system = ReactionSystem(reactions, t, [collect(C); collect(Q); [S, E]], [k₀, k₁, k₂, k₃, k₄, k₅], combinatoric_ratelaws=true)
+function model!(du, u, p, t)
+    @unpack M = p 
+    boundaryConditions!(u, p)
+    du .= M*u
+end
 
-Graph(system)
+prob = ODEProblem(model!, u0, (0.0,tMax), p)
+sol = solve(prob, Trapezoid(), saveat=tMax/100.0)
+
+#%%
+
+fig = Figure(size=(1000,1000))
+ax = CairoMakie.Axis(fig[1, 1])
+ylims!(ax, (0.0,15.0))
+uInternal = Observable(zeros(N))
+lines!(ax, x, uInternal, color=:blue)
+record(fig,"test.mp4", 1:length(sol.t); framerate=10) do i
+    uInternal[] = sol.u[i][Nghost+1:end-Nghost]
+    uInternal[] = uInternal[]
+end
 
 
-# @parameters k₀ k₁ k₂ k₃ k₄ k₅
-# @variables t
-# @species C₁(t) C₂(t) C₃(t) C₄(t) C₅(t) Q₁(t) Q₂(t) Q₃(t) Q₄(t) Q₅(t) S(t) E(t)
-# reactions = []
-# push!(reactions, Reaction(k₀, nothing, [C₁]))            # ∅->C₁
-# # Enzyme complex formation 
-# push!(reactions, Reaction(k₁, [C₁, E], [Q₁])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₁, [C₂, E], [Q₂])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₁, [C₃, E], [Q₃])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₁, [C₄, E], [Q₄])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₁, [C₅, E], [Q₅])) # Cₙ+E->Qₙ
+#%%
 
-# push!(reactions, Reaction(k₂, [Q₁], [C₁, E])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₂, [Q₂], [C₂, E])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₂, [Q₃], [C₃, E])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₂, [Q₄], [C₄, E])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₂, [Q₅], [C₅, E])) # Cₙ+E->Qₙ
+masses = zeros(length(sol.u))
+for t=1:length(sol.u)
+    for i=1+Nghost:Nplus-Nghost-1
+        masses[t] += dx*0.5*(sol.u[t][i]+sol.u[t][i+1])
+    end
+end
+fig2 = Figure(size=(1000,1000))
+ax2 = CairoMakie.Axis(fig2[1, 1])
+lines!(ax2, sol.t, masses)
+ylims!(ax2, (0.95,1.05))
+ax2.xlabel = "Time"
+ax2.ylabel = "Mass"
+display(fig2)
 
-# push!(reactions, Reaction(k₃, [Q₁, S], [C₂])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₃, [Q₂, S], [C₃])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₃, [Q₃, S], [C₄])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₃, [Q₄, S], [C₅])) # Cₙ+E->Qₙ
 
-# push!(reactions, Reaction(k₄, [C₂], [Q₁, S])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₄, [C₃], [Q₂, S])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₄, [C₄], [Q₃, S])) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₄, [C₅], [Q₄, S])) # Cₙ+E->Qₙ
 
-# push!(reactions, Reaction(k₅, [C₁], nothing)) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₅, [C₂], nothing)) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₅, [C₃], nothing)) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₅, [C₄], nothing)) # Cₙ+E->Qₙ
-# push!(reactions, Reaction(k₅, [C₅], nothing)) # Cₙ+E->Qₙ
+#%%
 
-# # Set up reaction system object. Collect symbolic state variables into a single vector.
-# @named system = ReactionSystem(reactions, t, [C₁,C₂,C₃,C₄,C₅,Q₁,Q₂,Q₃,Q₄,Q₅,S,E], [k₀, k₁, k₂, k₃, k₄, k₅], combinatoric_ratelaws=true)
+# fig = Figure(size=(1000, 1000))
+# ax = CairoMakie.Axis(fig[1, 1])#, aspect=DataAspect())
+# toPlot = hcat([u[Nghost+1:end-Nghost] for u in sol.u]...)
+# heatmap!(ax, collect(range(0.0..1.0, N)), sol.t, toPlot, colormap=:batlow)
+# resize_to_layout!(fig)
+# display(fig)
+# # save("$subFolder/$(fileName)_finalState.png", fig)
 
-# Graph(system)
+
+#%%
+# # https://en.wikipedia.org/wiki/Laplacian_matrix Symmetric Laplacian via the incidence matrix
+# # A incidence matrix 
+# A = spzeros(Float64, νMax+3, νMax+4)
+# for j=1:νMax+3
+#     A[j,j] = -1
+#     A[j,j+1] = 1
+# end
+# # Edge weights matrix 
+# W = spdiagm(ones(νMax+3))
+# ∇² = transpose(A)*W*A
+
+# ∇ = A./2.0
+
+
+#%%
+
+# fig = Figure(size=(1000, 1000))
+# ax = CairoMakie.Axis(fig[1, 1])#, aspect=DataAspect())
+# mov = 
+# lines!(ax, x, sol.u[1][Nghost+1:end-Nghost], color=:blue)
+# lines!(ax, x, sol.u[end][Nghost+1:end-Nghost], color=:blue)
+# resize_to_layout!(fig)
+# display(fig)
+
+#%%
+
+# ∇f = spzeros(Float64, Nplus, Nplus)
+# for i=1:N
+#     ∇f[i, i] = -3
+#     ∇f[i, i+1] = 2
+#     ∇f[i, i+2] = 1
+# end
+# ∇f[N+1, N+1] = -3
+# ∇f[N+1, N+2] = 1
+# ∇f[N+2, N+2] = -3
+# ∇f .= ∇f./(2*dx)
