@@ -49,6 +49,12 @@ vν = β/(1+α*h)      # Scalar advection velocity in ν
 Dx = K₂*K₄/(1+α*h)  # Diffusivity in x
 Dν = K₂*K₄/(1+α*h)  # Diffusivity in ν
 
+ghostMaskArray = fill(true, (Nplus, Nplus))
+ghostMaskArray[:, 1] .= false
+ghostMaskArray[:, end] .= false
+ghostMaskArray[1, :] .= false
+ghostMaskArray[end, :] .= false
+ghostMask = reshape(ghostMaskArray, Nplus*Nplus)
 
 #%%
 

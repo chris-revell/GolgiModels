@@ -48,9 +48,9 @@ dν = νs[2]-νs[1]
 α = 10.0
 h = 1.0
 β = 0.1
-K₂ = 0.5
-K₄ = 0.5  
-tMax = 0.1
+K₂ = 0.05
+K₄ = 0.05  
+tMax = 0.02
 
 vx = 0.0            # Scalar advection speed in x
 vy = 0.0            # Scalar advection speed in y
@@ -220,6 +220,7 @@ end
 
 prob = ODEProblem(model!, u0, (0.0,tMax), p)
 # prob = ODEProblem(MatrixOperator(L), u0, (0.0,tMax), p)
+# sol = solve(prob, Trapezoid(), saveat=tMax/100.0)
 sol = solve(prob, Trapezoid(), saveat=tMax/100.0)
 # sol = solve(prob, LinearExponential(), saveat=tMax/100.0)
 
@@ -234,7 +235,7 @@ M = sum(uInternal3D, dims=1)
 M = sum(M, dims=2)
 lines!(ax, νs[1:Nghost:end-2*Nghost], M[1,1,:])
 ax.title = "Integral of c over x and y against ν at final time"
-save("finalνVsM.png", fig)
+save(datadir("finalνVsM.png"), fig)
 
 #%%
 
@@ -264,7 +265,7 @@ globalmax = maximum([maximum(u) for u in sol.u])
 clims = (globalmin,globalmax)
 clims = (minimum(uInternal3D), maximum(uInternal3D))
 heatmap!(ax, xs[Nghost+1:end-Nghost], ys[Nghost+1:end-Nghost], uInternal, colorrange=clims, colormap=:batlow)
-record(fig,"LargeNuTimeScan.mp4", 1:length(sol.t); framerate=10) do i
+record(fig, datadir("LargeNuTimeScan.mp4"), 1:length(sol.t); framerate=10) do i
     uInternal3D .= reshape(sol.u[i][ghostMask], (Nx, Ny, Nν))
     uInternal[] .= uInternal3D[:,:,end]
     uInternal[] = uInternal[]
@@ -284,7 +285,7 @@ globalmax = maximum([maximum(u) for u in sol.u])
 ylims!(ax, (globalmin, globalmax))
 lines!(ax, νs[Nghost+1:end-Nghost], uInternal)
 ax.title = "c against ν at x=0.5, y=0.5 at t=0.0"
-record(fig,"NuProfileAtxyOverTime.mp4", 1:length(sol.t); framerate=10) do i
+record(fig, datadir("NuProfileAtxyOverTime.mp4"), 1:length(sol.t); framerate=10) do i
     uInternal3D .= reshape(sol.u[i][ghostMask], (Nx, Ny, Nν))
     uInternal[] .= uInternal3D[Nx÷2,Nx÷2,:]
     uInternal[] = uInternal[]
@@ -303,7 +304,7 @@ uInternal = Observable(zeros(Nx,Nν))
 clims = (globalmin,globalmax)
 ax.title = "c against x and ν at y=0.5 at t=0.0"
 heatmap!(ax, xs[Nghost+1:end-Nghost], νs[Nghost+1:end-Nghost], uInternal, colorrange=clims, colormap=:batlow)
-record(fig,"xνOverTimeAty.mp4", 1:length(sol.t); framerate=10) do i
+record(fig, datadir("xνOverTimeAty.mp4"), 1:length(sol.t); framerate=10) do i
     uInternal[] .= reshape(sol.u[i][ghostMask], (Nx, Ny, Nν))[:,Nyplus÷2,:]
     uInternal[] = uInternal[]
     ax.title = "c against x and ν at y=0.5 at t=$(sol.t[i])"
