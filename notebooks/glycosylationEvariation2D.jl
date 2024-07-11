@@ -55,11 +55,14 @@ tMax = 0.1
 
 #%%
 
-hFun(x, μx, σx) = 1.0 #+ exp(-(x-μx)^2/σx^2)
+hFun(x, μx, σx) = 0.1+exp(-(x-μx)^2/σx^2)
 μxh = xMax/2.0; σxh = xMax/10.0
 u0fun(x, μx, σx, z, μz, σz) = exp(-(x-μx)^2/σx^2 - (z-μz)^2/σz^2)
-μx = 0.5*xMax; σx=10.0*xMax; μν=0.0; σν=0.1*νMax
-fFun(x, μx, σx) = 0.1 + exp(-(x-μx)^2/σx^2)
+μxu0 = xMax/2.0; σxu0 = 10.0*xMax
+μνu0 = 0.0; σνu0 = νMax/10.0
+
+fFun(x, μx, σx) = 0.1 #+ exp(-(x-μx)^2/σx^2)
+μxF = xMax/2.0; σxF=xMax/10.0
 
 #%%
 
@@ -125,7 +128,7 @@ Px = ghostEdgeMaskSparse*spdiagm(vcat(reshape(P_i_mat, nEdgesi), zeros(nEdgesk))
 # Initial conditions using Gaussian
 uMat = zeros(Float64, Nxplus, Nνplus)
 for νν=1:Nνplus, xx=1:Nxplus
-    uMat[xx,νν] = u0fun(xs[xx], μx, σx, νs[νν], μν, σν)            
+    uMat[xx,νν] = u0fun(xs[xx], μxu0, σxu0, νs[νν], μνu0, σνu0)            
 end
 u0 = reshape(uMat, nVerts)
 u0[ghostVertexMask.!=true] .= 0.0
@@ -138,7 +141,7 @@ u0 ./= integ
 
 matFₑ = zeros(Nxplus, Nνplus)
 for i=1:Nxplus
-    matFₑ[i, :] .= fFun(xs[i], μxh, σxh)
+    matFₑ[i, :] .= fFun(xs[i], μxF, σxF)
     # matFₑ[i] = 1.0
 end
 matE = zeros(Nxplus, Nνplus)
