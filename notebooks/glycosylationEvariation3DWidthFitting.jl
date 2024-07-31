@@ -52,10 +52,12 @@ hs = collect(skipmissing(hs))
 
 # PDE discretisation parameters 
 Nx = 101             # Number of discretisation points in space
+Ny = 101             # Number of discretisation points in space
 Nν = 101             # Number of discretisation points in polymerisation space
 Nghost = 1           # Number of ghost points on each side of the domain 
 Nνplus = Nν+2*Nghost # Number of discretised points including ghost points 
 Nxplus = Nx+2*Nghost # Number of discretised points including ghost points 
+Nyplus = Ny+2*Nghost # Number of discretised points including ghost points 
 
 xMax = (length(hs)-1)   
 xs   = collect(range(0.0..xMax, Nxplus)) # Positions of discretised vertices in space
@@ -67,14 +69,14 @@ dν   = νs[2]-νs[1]
 
 # Basic parameters: geometry
 Ω = 1.0         # Lumen volume
-Ωperp = 100.0  # Lumen footprint area
+Ωperp = 1000.0  # Lumen footprint area
 N = 100         # Maximum polymer length 
 
 # Basic parameters: rate constants
-k_Cd = 100.0 # Complex desorption rate
+k_Cd = 1.0 # Complex desorption rate
 k_Ca = 1.0 # Complex adsorption rate
 k_Sd = 1.0 # Substrate desorption rate
-k_Sa = 100.0 # Substrate adsorption rate
+k_Sa = 1.0 # Substrate adsorption rate
 k₁ = 1.0   # Complex formation forward reaction rate 
 k₂ = 1.0   # Complex dissociation reverse reaction rate 
 k₃ = 1.0   # Product formation
@@ -82,13 +84,13 @@ k₄ = 1.0   # Product dissociation
 
 # Basic parameters: concentrations 
 C_b = 1.0  # Initial bulk monomer concentration
-S_b = 100.0  # Initial bulk substrate concentration
+S_b = 1.0  # Initial bulk substrate concentration
 S_0 = 1.0  # Early surface substrate concentration 
-E_0 = 0.001/Ωperp # Mean enzyme concentration
+E_0 = 0.01 # Mean enzyme concentration
 
 # Basic parameters: diffusivities
-D_C = 0.001  # Monomer/polymer diffusivity
-D_S = 0.01  # Substrate diffusivity
+D_C = 1.0  # Monomer/polymer diffusivity
+D_S = 1.0  # Substrate diffusivity
 
 # Basic parameters: Timescale 
 Tᵣ⁰ = 1.0  # Release time
@@ -108,7 +110,7 @@ C_0 = C_b*h₀/(2*(1+α_C))        # Early surface monomer concentration
 σ   = (k_Sa*S_b*(2*k_Ca*Ωperp + k_Cd*Ω)) / (k_Ca*C_b*(2*k_Sa*Ωperp + k_Sd*Ω))
 𝓢   = S_b*Ω                     # Initial substrate mass
 𝓔   = 2*E_0*Ωperp               # Total enzyme mass
-ϵ   = 𝓔*(2*k_Ca*Ωperp + k_Cd*Ω) / (2*k_Ca*C_b*Ωperp)
+ε   = 𝓔*(2*k_Ca*Ωperp + k_Cd*Ω) / (2*k_Ca*C_b*Ωperp)
 
 β = N*(σ*K₃ - K₂*K₄)
 
@@ -133,85 +135,6 @@ Tᵣ  = k₁*𝓔*Tᵣ⁰/(2*Ωperp)
 # 𝓓 = α_C*δ_C*N^2*(K₂+σ*K₃)
 # tMax = 60.0
 
-
-println("Small aspect ratio")
-println("Ω² << Ω⟂³min(1, D_C/k₁𝓔, D_S/k₁𝓔)")
-println("Ω² = $(Ω^2), Ω⟂³min(1, D_C/k₁𝓔, D_S/k₁𝓔) = $(Ωperp^3*minimum([1.0,D_C/k₁*𝓔,D_S/k₁*𝓔]))")
-# println("$(Ω^2 < Ωperp^3*minimum([1.0,D_C/k₁*𝓔,D_S/k₁*𝓔]))")
-printstyled("$(Ω^2 < Ωperp^3*minimum([1.0,D_C/k₁*𝓔,D_S/k₁*𝓔]))"; color = (Ω^2 < Ωperp^3*minimum([1.0,D_C/k₁*𝓔,D_S/k₁*𝓔]) ? :green : :red))
-println("")
-
-println("Limited enzyme")
-println("ϵ << 1 ")
-println("ϵ = $(ϵ) ")
-# println("$(ϵ<1)")
-printstyled("$(ϵ<1)"; color = (ϵ<1 ? :green : :red))
-println("")
-
-println("Abundant substrate")
-println("σ >> 1")
-println("σ = $(σ)")
-# println("$(σ>1)")
-printstyled("$(σ>1)"; color = (σ>1 ? :green : :red))
-println("")
-
-println("Abundant substrate")
-println("k₂k₄k_Sd < S_bk₁k₃k_Sa")
-println("k₂k₄k_Sd = $(k₂*k₄*k_Sd), S_bk₁k₃k_Sa = $(S_b*k₁*k₃*k_Sa)")
-# println("$(k₂*k₄*k_Sd < S_b*k₁*k₃*k_Sa)")
-printstyled("$(k₂*k₄*k_Sd < S_b*k₁*k₃*k_Sa)"; color = (k₂*k₄*k_Sd < S_b*k₁*k₃*k_Sa ? :green : :red))
-println("")
-
-println("Balanced production")
-println("k₄ ∼ k₁")
-println("k₄ = $(k₄) ∼ k₁ = $(k₁) ")
-# println("$(isapprox(k₄, k₁, rtol = 0.05))")
-printstyled("$(isapprox(k₄, k₁, rtol = 0.05))"; color = (isapprox(k₄, k₁, rtol = 0.05) ? :green : :red))
-println("")
-
-println("Balanced production")
-println("k₁*k_Ca*C_b*(2*k_Sa*Ωperp + k_Sd*Ω) ∼ k₃*k_Sa*S_b*(2*k_Ca*Ωperp + k_Cd*Ω) ")
-println("k₁*k_Ca*C_b*(2*k_Sa*Ωperp + k_Sd*Ω) = $(k₁*k_Ca*C_b*(2*k_Sa*Ωperp + k_Sd*Ω)), k₃*k_Sa*S_b*(2*k_Ca*Ωperp + k_Cd*Ω) = $(k₃*k_Sa*S_b*(2*k_Ca*Ωperp + k_Cd*Ω))")
-# println("$(isapprox(k₁*k_Ca*C_b*(2*k_Sa*Ωperp + k_Sd*Ω), k₃*k_Sa*S_b*(2*k_Ca*Ωperp + k_Cd*Ω), rtol = 0.05))")
-printstyled("$(isapprox(k₁*k_Ca*C_b*(2*k_Sa*Ωperp + k_Sd*Ω), k₃*k_Sa*S_b*(2*k_Ca*Ωperp + k_Cd*Ω), rtol = 0.05))"; color = (isapprox(k₁*k_Ca*C_b*(2*k_Sa*Ωperp + k_Sd*Ω), k₃*k_Sa*S_b*(2*k_Ca*Ωperp + k_Cd*Ω), rtol = 0.05) ? :green : :red))
-println("")
-
-println("Strong exchange kinetics")
-println("D_C*Ωperp << k_Ca*Ω") 
-println("D_C*Ωperp = $(D_C*Ωperp), k_Ca*Ω = $(k_Ca*Ω)")
-# println("$(D_C*Ωperp<k_Ca*Ω)")
-printstyled("$(D_C*Ωperp<k_Ca*Ω)"; color = (D_C*Ωperp<k_Ca*Ω ? :green : :red))
-println("")
-
-println("Strong exchange kinetics")
-println("D_S*Ωperp << k_Sa*Ω") 
-println("D_S*Ωperp = $(D_S*Ωperp), k_Sa*Ω = $(k_Sa*Ω)")
-# println("$(D_S*Ωperp<k_Sa*Ω)")
-printstyled("$(D_S*Ωperp<k_Sa*Ω)"; color = (D_S*Ωperp<k_Sa*Ω ? :green : :red))
-println("")
-
-println("Adequate adsorbed substrate")
-println("2k₂k₄k_SaΩperp < (S_bk₁k₃k_Sa - k₂k₄k_Sd)Ω") 
-println("2k₂k₄k_SaΩperp = $(2*k₂*k₄*k_Sa*Ωperp), (S_bk₁k₃k_Sa - k₂k₄k_Sd)Ω=$((S_b*k₁*k₃*k_Sa - k₂*k₄*k_Sd)*Ω)")
-# println("$(2*k₂*k₄*k_Sa*Ωperp < (S_b*k₁*k₃*k_Sa - k₂*k₄*k_Sd)*Ω)")
-printstyled("$(2*k₂*k₄*k_Sa*Ωperp < (S_b*k₁*k₃*k_Sa - k₂*k₄*k_Sd)*Ω)"; color = (2*k₂*k₄*k_Sa*Ωperp < (S_b*k₁*k₃*k_Sa - k₂*k₄*k_Sd)*Ω ? :green : :red))
-println("")
-
-
-println("Slow adsorption of cargo")
-println("α_C >> 1") 
-println("α_C=$(α_C)")
-# println("$(α_C>1)")
-printstyled("$(α_C>1)"; color = (α_C>1 ? :green : :red))
-println("")
-
-
-println("α_C >> 1 ? α_C=$(α_C)... $(α_C>1)")
-
-
-
-#%%
-
 # Create directory for run data labelled with current time.
 paramsName = @savename cisternaSeriesID K₂ K₃ K₄ α_C δ_C σ N Tᵣ
 folderName = "$(paramsName)_$(Dates.format(Dates.now(),"yy-mm-dd-HH-MM-SS"))"
@@ -233,15 +156,16 @@ fFun(x, μx, σx) = 0.1 #+ exp(-(x-μx)^2/σx^2)
 
 #%%
 
-A = makeIncidenceMatrix3D(Nνplus, Nxplus, 1)
+A = makeIncidenceMatrix3D(Nνplus, Nxplus,1)
 Ā = abs.(A)
 Aᵀ = transpose(A)
 Aᵤₚ = dropzeros((Ā-A).÷2)
 
-nVerts = Nνplus*Nxplus       # Total number of vertices 
-nEdgesi = (Nνplus-1)*Nxplus  # Number of i-directed edges (ν, in this case)
-nEdgesj = Nνplus*(Nxplus-1)  # Number of j-directed edges (x, in this case)
-nEdges = nEdgesi+nEdgesj     # Total number of edges over all dimensions 
+nVerts = Nνplus*Nxplus*Nyplus       # Total number of vertices 
+nEdgesi = (Nνplus-1)*Nxplus*Nyplus  # Number of i-directed edges (ν, in this case)
+nEdgesj = Nνplus*(Nxplus-1)*Nyplus  # Number of j-directed edges (x, in this case)
+nEdgesk = Nνplus*Nxplus*(Nyplus-1)  # Number of k-directed edges (y, in this case)
+nEdges = nEdgesi+nEdgesj+nEdgesk    # Total number of edges over all dimensions 
 
 # Ghost point masks
 ghostVertexMask = makeGhostVertexMask((Nνplus, Nxplus))
@@ -256,7 +180,7 @@ l⁻¹ = edgeLengthInverseMatrix((Nνplus, Nxplus), (dν, dx))
 
 # Diagonal matrices of compartment thickness h over all vertices hᵥ
 # Also diagonal matrix of thickness over edges, formed by taking mean of h at adjacent vertices 0.5.*Ā*hᵥ
-mat_h = zeros(Nνplus, Nxplus)
+mat_h = zeros(Nνplus, Nxplus, Nyplus)
 for j=1:Nxplus
     # mat_h[:, j] .= hFun(xs[j])
     selectdim(mat_h, 2, j) .= hFun(xs[j])
@@ -265,38 +189,43 @@ hᵥ_vec = reshape(mat_h, nVerts)         # Cisternal thickness evaluated over v
 hₑ_vec = 0.5.*Ā*hᵥ_vec                  # Cisternal thickness evaluated over edges (mean of adjacent vertices)
 hᵥ = spdiagm(hᵥ_vec)                    # Cisternal thickness over vertices, as a sparse diagonal matrix
 hₑ = spdiagm(hₑ_vec)                    # Cisternal thickness over edges, as a sparse diagonal matrix
-aᵥ = spdiagm(1.0./(1.0 .+ α_C.*hᵥ_vec)) # Prefactor 1/(1+α_C*hᵥ(x)) evaluated over vertices, packaged into a sparse diagonal matrix for convenience
-aₑ = spdiagm(1.0./(1.0 .+ α_C.*hₑ_vec)) # Prefactor 1/(1+α_C*hₑ(x)) evaluated over edges, packaged into a sparse diagonal matrix for convenience
+aᵥ = spdiagm(1.0./(1.0 .+ α_c.*hᵥ_vec)) # Prefactor 1/(1+α_c*hᵥ(x)) evaluated over vertices, packaged into a sparse diagonal matrix for convenience
+aₑ = spdiagm(1.0./(1.0 .+ α_c.*hₑ_vec)) # Prefactor 1/(1+α_c*hₑ(x)) evaluated over edges, packaged into a sparse diagonal matrix for convenience
 
 # Velocity field 
-V_i = fill(β, (Nνplus-1, Nxplus))
-V_j = fill(0.0, (Nνplus, Nxplus-1))
-Vvec = vcat(reshape(V_i, nEdgesi), reshape(V_j, nEdgesj))
+V_i = fill(β, (Nνplus-1, Nxplus, Nyplus))
+V_j = fill(0.0, (Nνplus, Nxplus-1, Nyplus))
+V_k = fill(0.0, (Nνplus, Nxplus, Nyplus-1))
+Vvec = vcat(reshape(V_i, nEdgesi), reshape(V_j, nEdgesj), reshape(V_k, nEdgesk))
 V = ghostEdgeMaskSparse*spdiagm(Vvec)*aₑ   # Diagonal matrix of advection velocities at each edge
 
 # Diffusivity field over edges 
 # Set no-flux boundary conditions by enforcing zero diffusivity in edges connection ghost points
-D_i = fill(dx*K₂*K₄, (Nνplus-1, Nxplus))
-D_j = fill(dν*K₂*K₄, (Nνplus, Nxplus-1))
-Dvec = vcat(reshape(D_i, nEdgesi), reshape(D_j, nEdgesj))
-𝓓 = ghostEdgeMaskSparse*spdiagm(Dvec)*aₑ # Diagonal matrix of advection velocities at each edge
+D_i = fill(dx*dy*K₂*K₄, (Nνplus-1, Nxplus, Nyplus))
+D_j = fill(dν*dy*K₂*K₄, (Nνplus, Nxplus-1, Nyplus))
+D_k = fill(dν*dx*K₂*K₄, (Nνplus, Nxplus, Nyplus-1))
+Dvec = vcat(reshape(D_i, nEdgesi), reshape(D_j, nEdgesj), reshape(D_k, nEdgesk))
+𝒟 = ghostEdgeMaskSparse*spdiagm(Dvec)*aₑ # Diagonal matrix of advection velocities at each edge
 
 # Matrices for picking out ν and xy directions in derivatives 
-P = ghostEdgeMaskSparse*spdiagm(vcat(ones(Int64, nEdgesi), ones(Int64, nEdgesj)))     # Diagonal sparse matrix to exclude all edges adjacent to ghost points  
-Pν = ghostEdgeMaskSparse*spdiagm(vcat(ones(Int64, nEdgesi), zeros(Int64, nEdgesj)))   # Diagonal sparse matrix to exclude all xy edges and ν edges adjacent to ghost points  
-Px = ghostEdgeMaskSparse*spdiagm(vcat(zeros(Int64, nEdgesi), ones(Int64, nEdgesj)))   # Diagonal sparse matrix to exclude all ν edges and xy edges adjacent to ghost points 
+# P = ghostEdgeMaskSparse*spdiagm(vcat(reshape(P_i_mat, nEdgesi), reshape(P_j_mat, nEdgesk))) # Diagonal sparse matrix to exclude all edges adjacent to ghost points  
+P = ghostEdgeMaskSparse*spdiagm(vcat(ones(Int64, nEdgesi), ones(Int64, nEdgesj), ones(Int64, nEdgesk)))     # Diagonal sparse matrix to exclude all edges adjacent to ghost points  
+Pν = ghostEdgeMaskSparse*spdiagm(vcat(ones(Int64, nEdgesi), zeros(Int64, nEdgesj), zeros(Int64, nEdgesk)))   # Diagonal sparse matrix to exclude all xy edges and ν edges adjacent to ghost points  
+# Px = ghostEdgeMaskSparse*spdiagm(vcat(zeros(Int64, nEdgesi), ones(Int64, nEdgesj), ones(Int64, nEdgesk)))           # Diagonal sparse matrix to exclude all ν edges and xy edges adjacent to ghost points 
+Pxy = ghostEdgeMaskSparse*spdiagm(vcat(zeros(Int64, nEdgesi), ones(Int64, nEdgesj), ones(Int64, nEdgesk)))           # Diagonal sparse matrix to exclude all ν edges and xy edges adjacent to ghost points 
 
 # Diagonal matrix of edge lengths
-l_i = fill(dν, (Nνplus-1, Nxplus))
-l_j = fill(dx, (Nνplus, Nxplus-1))
-lvec = vcat(reshape(l_i, nEdgesi), reshape(l_j, nEdgesj))
+l_i = fill(dx, (Nνplus-1, Nxplus, Nyplus))
+l_j = fill(dy, (Nνplus, Nxplus-1, Nyplus))
+l_k = fill(dν, (Nνplus, Nxplus, Nyplus-1))
+lvec = vcat(reshape(l_i, nEdgesi), reshape(l_j, nEdgesj), reshape(l_k, nEdgesk))
 l = spdiagm(lvec)
 l⁻¹ = spdiagm(1.0./lvec)
 
 # Initial conditions using Gaussian
-uMat = zeros(Float64, Nνplus, Nxplus)
-for xx=1:Nxplus, νν=1:Nνplus
-    uMat[νν, xx] = u0fun(νs[νν], μνu0, σνu0, xs[xx], μxu0, σxu0)            
+uMat = zeros(Float64, Nνplus, Nxplus, Nyplus)
+for yy=1:Nyplus, xx=1:Nxplus, νν=1:Nνplus
+    uMat[νν, xx, yy] = u0fun(νs[νν], μνu0, σνu0, xs[xx], μxu0, σxu0)            
 end
 u0 = reshape(uMat, nVerts)
 u0[ghostVertexMask.!=true] .= 0.0
@@ -306,14 +235,15 @@ u0 ./= integ
 ∇ₑ = l⁻¹*A       # Gradient operator giving gradient on each edge
 ∇cdot = -W⁻¹*Aᵀ  # Divergence operator giving divergence on each vertex calculated from edges 
 
-matFₑ = zeros(Nνplus, Nxplus)
+matFₑ = zeros(Nνplus, Nxplus, Nyplus)
 for j=1:Nxplus
-    matFₑ[:, j] .= fFun(xs[j], μxF, σxF)
-    # selectdim(matFₑ, 2, j) .= fFun(xs[j], μxF, σxF)
+    # matFₑ[:, j] .= fFun(xs[j], μxF, σxF)
+    selectdim(matFₑ, 2, j) .= fFun(xs[j], μxF, σxF)
     # matFₑ[i] = 1.0
 end
-matE = zeros(Nνplus, Nxplus)
-E = spdiagm(reshape(matE, nVerts))
+matE = zeros(Nνplus, Nxplus, Nyplus)
+vecE = reshape(matE, nVerts)
+E = spdiagm(vecE)
 
 
 # Cνν = W⁻¹*Aᵀ*Pν*l⁻¹*A
@@ -327,15 +257,16 @@ E = spdiagm(reshape(matE, nVerts))
 # ċ = aE∇⋅flux_νₑ + a∇⋅flux_xyₑ
 # ċ = a*E*∇⋅(K₂*K₄.*Pν*∇ₑ*cᵥ - β*Pν*Aᵤₚ*cᵥ) + a∇⋅(Dₑ*hₑ*Pxy*∇ₑ*cᵥ)
 # Dₑ constant over edges 
-# ċ = a*(E*∇⋅(K₂*K₄.*Pν*∇ₑ - β*Pν*Aᵤₚ) + 𝓓.*∇⋅(hₑ*Pxy*∇ₑ))*cᵥ
+# ċ = a*(E*∇⋅(K₂*K₄.*Pν*∇ₑ - β*Pν*Aᵤₚ) + 𝒟.*∇⋅(hₑ*Pxy*∇ₑ))*cᵥ
 
 L1 = aᵥ*∇cdot*(K₂*K₄.*Pν*∇ₑ - β.*Pν*Aᵤₚ)
-L2 = aᵥ*∇cdot*(𝓓*hₑ*Px*∇ₑ)
+L2 = aᵥ*∇cdot*(𝒟*hₑ*Pxy*∇ₑ)
 
 p = (L1 = L1,
     L2 = L2,
     Nνplus = Nνplus,
     Nxplus = Nxplus,
+    Nyplus = Nyplus,
     K₂ = K₂,
     matE = matE,
     E = E,
@@ -346,47 +277,38 @@ function update_func!(L, u, p, t)
         L2,
         Nνplus,
         Nxplus,
+        Nyplus,
         K₂,
         matE,
         E,
         matFₑ = p
 
-    cs = reshape(u, (Nνplus, Nxplus))     
-    for j = 1:Nxplus
-        integrationFactor = K₂/(K₂ + simpsonsRule(cs[:,j]))
-        matE[:,j] .= matFₑ[:,j].*integrationFactor
+    cs = reshape(u, (Nνplus, Nxplus, Nyplus))     
+    for k = 1:Nyplus
+        for j= 1:Nxplus
+            integrationFactor = K₂/(K₂ + simpsonsRule(cs[:,j,k]))
+            matE[:,j,k] .= matFₑ[:,j,k].*integrationFactor
+        end
     end
     E .= spdiagm(reshape(matE, nVerts)) 
     L .= E*L1 .+ L2
 end
 
 L = MatrixOperator(E*L1.+L2, update_func! = update_func!)
-prob = ODEProblem(L, u0, (0.0, Tᵣ), p)
-sol = solve(prob, Vern9(), saveat=Tᵣ/100.0)
+prob = ODEProblem(L, u0, (0.0, tMax), p)
+sol = solve(prob, Vern9(), saveat=tMax/100.0)
 
 #%%
 
-isdir(datadir("sims", subFolder, folderName)) ? nothing : mkdir(datadir("sims", subFolder, folderName))
+isdir(datadir("sims", "hFitting")) ? nothing : mkdir(datadir("sims", "hFitting"))
 
 fig = Figure(size=(1000,1000))
-ax = Axis3(fig[1, 1], aspect=:equal, azimuth=2.275π)
-ax.xlabel = "x"
-ax.ylabel = "ν"
-ax.zlabel = "c"
-uInternal = Observable(zeros(Nν, Nx))
-globalmin = minimum([minimum(u[ghostVertexMask]) for u in sol.u])
-globalmax = maximum([maximum(u[ghostVertexMask]) for u in sol.u])
-zlims!(ax, (globalmin, globalmax))
-clims = (globalmin,globalmax)
-surface!(ax, xs[Nghost+1:end-Nghost], νs[Nghost+1:end-Nghost], uInternal, colorrange=clims, colormap=:batlow)
-record(fig, datadir("sims",subFolder,folderName,"c_against_x.mp4"), 1:length(sol.t); framerate=10) do i
-    uInternal[] .= reshape(sol.u[i][ghostVertexMask], (Nν, Nx))
-    uInternal[] = uInternal[]
-end
-
-# Find limits
+# ax = CairoMakie.Axis(fig[1, 1], aspect=1)
+ax = CairoMakie.Axis3(fig[1, 1])
+ax.xlabel = "ν"
+ax.ylabel = "M, ∱cdxdy"
 uInternal2D = reshape((W*sol.u[end])[ghostVertexMask], (Nν, Nx))
-M = sum(uInternal2D, dims=2)[:,1]
+M = sum(uInternal2D, dims=1)[1,:]
 minima = Float64[]
 maxima = Float64[]
 for i=1:length(sol.t)
@@ -413,15 +335,10 @@ record(fig, datadir("sims",subFolder, folderName, "Mvsν.mp4"), 1:length(sol.t);
 end
 save(datadir("sims",subFolder,folderName,"finalνVsM.png"), fig)
 
-
-fig = Figure(size=(1000,1000))
-ax = CairoMakie.Axis(fig[1, 1], aspect=1)
-ax.xlabel = "t"
-ax.ylabel = "M"
-ax.title = "Integral of Cₛ over x against ν"
-
-
-
+function productionTotalM(u, W, ghostVertexMask, dims, ϕ)
+    uInternal = reshape((W*u)[ghostVertexMask], dims)
+    return sum(selectdim(uInternal, 1, round(Int, ϕ*dims[1])))
+end
 
 # # Matrices for picking out ν and xy directions in derivatives 
 # P_i_mat = ones(Int64, Nνplus-1, Nxplus, Nyplus) # Matrix of i-directed edge accessibility
@@ -505,4 +422,3 @@ ax.title = "Integral of Cₛ over x against ν"
 #     du .= p*u
 # end
 # prob = ODEProblem(model!, u0, (0.0,tMax), p)
-
